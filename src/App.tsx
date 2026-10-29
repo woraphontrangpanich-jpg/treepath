@@ -1,28 +1,24 @@
 import { clsx } from 'clsx'
 import { FlaskConical, GitBranch, LineChart, Loader2, X } from 'lucide-react'
 import { useStore, type Workspace } from './state/store'
+import { BuildWorkspace } from './ui/build/BuildWorkspace'
 import { DataWorkspace } from './ui/data/DataWorkspace'
 import { TopBar } from './ui/TopBar'
 
-const UPCOMING: Record<Exclude<Workspace, 'data'>, { icon: typeof GitBranch; title: string; text: string }> = {
-  build: {
-    icon: GitBranch,
-    title: 'Build — coming next',
-    text: 'Drag metrics onto a canvas, add formula cards (Revenue = Orders × Price), and connect drivers with typed links.',
-  },
+const UPCOMING: Record<Exclude<Workspace, 'data' | 'build'>, { icon: typeof GitBranch; title: string; text: string }> = {
   analyze: {
     icon: LineChart,
-    title: 'Analyze — coming soon',
+    title: 'Analyze — coming in phase 4',
     text: 'Trends, correlations and fitted regression models for every driver link, with diagnostics.',
   },
   scenario: {
     icon: FlaskConical,
-    title: 'Scenario — coming soon',
+    title: 'Scenario — coming in phase 5',
     text: 'Change an input ("increase Ad Spend 20%") and follow the impact through the tree to your outcome, with a confidence range.',
   },
 }
 
-function Upcoming({ workspace }: { workspace: Exclude<Workspace, 'data'> }) {
+function Upcoming({ workspace }: { workspace: Exclude<Workspace, 'data' | 'build'> }) {
   const u = UPCOMING[workspace]
   return (
     <div className="grid flex-1 place-items-center p-8">
@@ -79,6 +75,8 @@ export default function App() {
         </div>
       ) : workspace === 'data' ? (
         <DataWorkspace />
+      ) : workspace === 'build' ? (
+        <BuildWorkspace />
       ) : (
         <Upcoming workspace={workspace} />
       )}

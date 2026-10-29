@@ -12,7 +12,9 @@
     "samples": "node scripts/make-samples.mjs"
   },
   "dependencies": {
+    "@xyflow/react": "^12.12.0",
     "clsx": "^2.1.1",
+    "elkjs": "^0.12.1",
     "idb-keyval": "^6.3.0",
     "lucide-react": "^1.64.0",
     "react": "^19.3.1",

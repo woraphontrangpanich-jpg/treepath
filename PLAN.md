@@ -4,7 +4,7 @@
 > build a tree of how features drive an outcome (e.g. Revenue, Profit), and forecast what
 > happens to the outcome when an input changes — using exact formulas plus linear regression.
 
-Status: **Phases 0–1 done** (scaffold, Excel import, table links) · next: Phase 2 tree builder · Date: 2026-10-29
+Status: **Phases 0–2 done** (scaffold, Excel import, table links, tree builder) · next: Phase 3 Text Build · Date: 2026-10-29
 
 ---
 

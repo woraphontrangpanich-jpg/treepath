@@ -42,6 +42,12 @@
   --down-soft: #fdecec;
   --warn: #a16207;
   --warn-soft: #fdf6dc;
+  --e-formula: #16a34a;
+  --e-cost: #dc2626;
+  --e-driver: #7c3aed;
+  --e-influence: #d97706;
+  --e-leading: #2563eb;
+  --e-correlation: #0891b2;
   color-scheme: light;
 }
 
@@ -63,6 +69,12 @@
   --down-soft: #3b1717;
   --warn: #facc15;
   --warn-soft: #3a3210;
+  --e-formula: #4ade80;
+  --e-cost: #f87171;
+  --e-driver: #a78bfa;
+  --e-influence: #fbbf24;
+  --e-leading: #60a5fa;
+  --e-correlation: #22d3ee;
   color-scheme: dark;
 }
 
@@ -92,4 +104,55 @@ body {
 *:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* React Flow theming */
+.react-flow {
+  --xy-background-color: var(--bg);
+  --xy-node-border-radius: 12px;
+  --xy-minimap-background-color: var(--surface);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--bg) 70%, transparent);
+  --xy-controls-button-background-color: var(--surface);
+  --xy-controls-button-background-color-hover: var(--surface-2);
+  --xy-controls-button-color: var(--ink);
+  --xy-controls-button-border-color: var(--line);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow__attribution a {
+  color: var(--faint);
+}
+.react-flow__controls {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: none;
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+.react-flow__minimap {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+  background: var(--faint);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle,
+.react-flow.connecting .react-flow__handle {
+  opacity: 1;
+}
+.react-flow__handle:hover {
+  background: var(--accent);
+}
+.react-flow__connectionline path {
+  stroke: var(--accent);
+  stroke-width: 2;
 }
