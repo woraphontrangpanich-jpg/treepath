@@ -40,7 +40,7 @@ Open http://localhost:5173 and click **Try Sample Data**. It loads the sample fi
   In Build, **Learn Effects By** compares files key by key (e.g. region by region) instead of on totals.
 - **Tree builder:**
   - Links are **Formula** (exact, red when subtracted), **Learned from history**, or **Note only** (no maths).
-  - Formula cards (violet, `ƒ` band, shown with their expression) look clearly different from data cards.
+  - Formula cards (amber, `ƒ` band, shown with their expression) look clearly different from data cards.
     Every card opens to show its details, or open them all at once with **Show Details**.
   - Select a card to see how every other card moves with it: correlation of changes (r, with p-value) on
     each card and ranked in the side panel.

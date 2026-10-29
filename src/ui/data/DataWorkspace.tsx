@@ -160,7 +160,7 @@ function Welcome() {
           <div>
             <h1 className="font-display text-[40px] leading-[1.1] text-balance sm:text-[54px]">
               What if Ad Spend went{' '}
-              <span className="inline-block rounded-2xl bg-pop px-3 text-pop-ink tabular">
+              <span className="mark mark-draw whitespace-nowrap tabular">
                 {pct >= 0 ? 'up' : 'down'} {Math.abs(pct)}%
               </span>
               ?
@@ -184,7 +184,7 @@ function Welcome() {
             </p>
           </div>
 
-          <div className="contour relative overflow-hidden rounded-[28px] border border-line bg-surface/60 p-5 sm:p-7">
+          <div className="paper relative overflow-hidden rounded-[28px] border border-line bg-surface/60 p-5 sm:p-7">
             <DemoTree pct={pct} />
             <div className="mt-2 rounded-2xl border border-line bg-surface p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">

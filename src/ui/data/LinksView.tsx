@@ -45,7 +45,7 @@ export function LinksView() {
           </FilePicker>
         </div>
       </header>
-      <div className="contour relative min-h-0 flex-1">
+      <div className="paper relative min-h-0 flex-1">
         <ReactFlowProvider>
           <LinkCanvas />
         </ReactFlowProvider>

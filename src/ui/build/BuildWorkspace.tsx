@@ -70,7 +70,7 @@ function TreeMenu({ tree }: { tree: Tree }) {
         <ChevronDown className="size-3.5 text-faint" />
       </Button>
       {open && (
-        <div className="popover absolute top-full left-0 z-30 mt-1.5 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-[0_16px_40px_-16px_rgb(17_42_51/0.4)]">
+        <div className="popover absolute top-full left-0 z-30 mt-1.5 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-[0_16px_40px_-16px_rgb(27_24_64/0.4)]">
           <div className="max-h-60 overflow-y-auto">
             {trees.map((t) => (
               <button key={t.id} type="button" onClick={act(() => openTree(t.id))} className={clsx(item, t.id === tree.id && 'bg-accent-soft')}>
@@ -167,7 +167,7 @@ function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
       />
       <Button size="sm" onClick={() => void autoLayout()} disabled={busy || tree.nodes.length === 0} title="Arrange cards: inputs below, outcome on top">
         <LayoutDashboard className="size-3.5" />
-        <span className="hidden xl:inline">Tidy Up</span>
+        <span className="hidden whitespace-nowrap xl:inline">Tidy Up</span>
       </Button>
       <Button
         size="sm"
@@ -177,7 +177,7 @@ function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
         title={detailsAll ? 'Hide details on every card' : 'Show details on every card'}
       >
         <PanelTopOpen className="size-3.5" />
-        <span className="hidden xl:inline">{detailsAll ? 'Hide Details' : 'Show Details'}</span>
+        <span className="hidden whitespace-nowrap xl:inline">{detailsAll ? 'Hide Details' : 'Show Details'}</span>
       </Button>
       <Button size="sm" variant="ghost" onClick={() => fitView({ padding: 0.15, duration: 300 })} title="Fit to screen" aria-label="Fit to screen">
         <Maximize className="size-3.5" />
@@ -197,7 +197,7 @@ function Editor({ tree }: { tree: Tree }) {
       <Library tree={tree} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Toolbar tree={tree} errorCount={errors} />
-        <div className="contour relative min-h-0 flex-1">
+        <div className="paper relative min-h-0 flex-1">
           <Canvas tree={tree} model={model} />
         </div>
       </div>

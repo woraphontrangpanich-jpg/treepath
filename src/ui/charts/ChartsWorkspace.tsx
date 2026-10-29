@@ -34,8 +34,8 @@ function Field({ label, children, hint }: { label: string; children: ReactNode; 
 function Insight({ lines }: { lines: ReactNode[] }) {
   if (!lines.length) return null
   return (
-    <div className="flex gap-3 rounded-xl bg-pop-soft px-4 py-3 text-[13.5px] leading-relaxed text-ink">
-      <Lightbulb className="mt-0.5 size-4 shrink-0 text-warn" />
+    <div className="insight flex gap-3 rounded-xl border border-line bg-surface-2 px-4 py-3 text-[13.5px] leading-relaxed text-ink">
+      <Lightbulb className="mt-0.5 size-4 shrink-0 text-accent" />
       <ul className="space-y-1">
         {lines.map((l, i) => (
           <li key={i}>{l}</li>

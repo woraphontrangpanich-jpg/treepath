@@ -482,7 +482,7 @@ function Results({ run, table, sources }: { run: Run; table: Table; sources: Sou
         {m.task === 'classification' ? (
           <>
             <p className="font-display mt-3 text-[30px] leading-tight">
-              Right {pct(m.accuracy)} of the time on {run.test.toLocaleString()} rows it never saw.
+              Right <span className="mark">{pct(m.accuracy)}</span> of the time on {run.test.toLocaleString()} rows it never saw.
             </p>
             <p className="mt-2 text-[14px] text-bg/75">
               Always guessing “{m.baselineClass}” would be right {pct(m.baseline)}.{' '}
@@ -492,7 +492,7 @@ function Results({ run, table, sources }: { run: Run; table: Table; sources: Sou
         ) : (
           <>
             <p className="font-display mt-3 text-[30px] leading-tight">
-              Off by about {formatValue(m.mae, fmt)} on average, on {run.test.toLocaleString()} rows it never saw.
+              Off by about <span className="mark">{formatValue(m.mae, fmt)}</span> on average, on {run.test.toLocaleString()} rows it never saw.
             </p>
             <p className="mt-2 text-[14px] text-bg/75">
               It explains {pct(Math.max(0, m.r2))} of the differences in {run.target}. Always guessing the average would be off by {formatValue(m.baselineMae, fmt)}.

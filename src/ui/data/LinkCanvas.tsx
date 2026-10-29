@@ -132,7 +132,7 @@ function TableCardImpl({ data, selected }: NodeProps<TableNode>) {
   const span = date && date.profile.min !== null ? `, ${monthLabel(date.profile.min)} to ${monthLabel(date.profile.max)}` : ''
   return (
     <div
-      className={clsx('rounded-xl border bg-surface shadow-[0_8px_24px_-16px_rgb(17_42_51/0.5)]', selected ? 'border-accent' : 'border-line')}
+      className={clsx('rounded-xl border bg-surface shadow-[0_8px_24px_-16px_rgb(27_24_64/0.5)]', selected ? 'border-accent' : 'border-line')}
       style={{ width: NODE_W }}
     >
       <button
@@ -248,7 +248,7 @@ function LinkDetails({ link, tables, onClose }: { link: Link; tables: Table[]; o
   const name = (r: ColumnRef) => tables.find((t) => t.id === r.tableId)?.name ?? '?'
   const tone = matchTone(stats)
   return (
-    <div className="popover w-80 rounded-xl border border-line bg-surface p-4 shadow-[0_18px_40px_-22px_rgb(17_42_51/0.55)]">
+    <div className="popover w-80 rounded-xl border border-line bg-surface p-4 shadow-[0_18px_40px_-22px_rgb(27_24_64/0.55)]">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1 text-sm">
           <div className="truncate">

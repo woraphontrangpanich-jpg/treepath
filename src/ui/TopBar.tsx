@@ -8,8 +8,8 @@ export function Logo() {
   return (
     <div className="flex items-center gap-2.5">
       <svg viewBox="0 0 28 28" className="size-7" aria-hidden>
-        <path d="M14 25V15M14 15C14 10 8 9 6 4M14 15c0-5 6-6 8-11" fill="none" strokeWidth="2.6" strokeLinecap="round" className="stroke-accent" />
-        <circle cx="14" cy="25" r="2.6" className="fill-ink" />
+        <path d="M14 25V15M14 15C14 10 8 9 6 4M14 15c0-5 6-6 8-11" fill="none" strokeWidth="2.6" strokeLinecap="round" style={{ stroke: 'var(--pop)' }} />
+        <circle cx="14" cy="25" r="2.6" className="fill-frame-ink" />
       </svg>
       <span className="font-display text-[19px] leading-none" translate="no">
         Treepath
@@ -23,7 +23,7 @@ function ThemeToggle() {
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b1a20' : '#eef5f4')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#08071a' : '#1b1840')
     try {
       localStorage.setItem('treepath:theme', next)
     } catch {
@@ -35,7 +35,7 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="press grid size-9 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+      className="press grid size-9 place-items-center rounded-full text-frame-ink/70 hover:bg-frame-ink/10 hover:text-frame-ink"
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
     >
       {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -70,11 +70,11 @@ function Tabs() {
   }, [active])
 
   return (
-    <nav aria-label="Tools" className="relative flex rounded-full bg-surface-2 p-1 ring-1 ring-line">
+    <nav aria-label="Tools" className="relative flex rounded-full bg-frame-ink/[0.07] p-1 ring-1 ring-frame-ink/10">
       {pill && (
         <span
           aria-hidden
-          className="absolute top-1 bottom-1 rounded-full bg-ink shadow-sm"
+          className="absolute top-1 bottom-1 rounded-full bg-accent shadow-[0_4px_14px_-4px_rgb(91_61_245/0.7)]"
           style={{ left: pill.left, width: pill.width, transition: 'left 280ms var(--ease-in-out), width 280ms var(--ease-in-out)' }}
         />
       )}
@@ -94,7 +94,7 @@ function Tabs() {
             title={disabled ? 'Add files first' : t.label}
             className={clsx(
               'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40',
-              on ? 'text-bg' : 'text-muted hover:text-ink',
+              on ? 'text-white' : 'text-frame-ink/65 hover:text-frame-ink',
             )}
           >
             <t.icon className="size-4 shrink-0" />
@@ -108,7 +108,7 @@ function Tabs() {
 
 export function TopBar() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-surface px-5">
+    <header className="flex h-16 shrink-0 items-center gap-4 bg-frame px-5 text-frame-ink">
       <Logo />
       <div className="mx-auto">
         <Tabs />

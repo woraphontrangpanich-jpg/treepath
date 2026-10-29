@@ -47,7 +47,7 @@ function Tip({ x, y, width, children }: { x: number; y: number; width: number; c
   const left = Math.min(Math.max(8, x + 14), width - 200)
   return (
     <div
-      className="pointer-events-none absolute z-10 w-max max-w-[220px] rounded-lg border border-line bg-surface px-3 py-2 text-[12px] shadow-[0_10px_30px_-12px_rgb(17_42_51/0.45)]"
+      className="pointer-events-none absolute z-10 w-max max-w-[220px] rounded-lg border border-line bg-surface px-3 py-2 text-[12px] shadow-[0_10px_30px_-12px_rgb(27_24_64/0.45)]"
       style={{ left, top: Math.max(4, y - 10) }}
     >
       {children}
