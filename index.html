@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1b1840" />
+    <meta name="theme-color" content="#000000" />
     <meta name="description" content="Treepath — build metric trees from Excel and forecast how changes ripple to your outcome." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,12 +14,12 @@
     />
     <title>Treepath</title>
     <script>
-      // Apply the saved/system theme before first paint to avoid a flash.
+      // Apply the saved appearance before first paint to avoid a flash; Black unless Brown & Cream was chosen.
       try {
         var t = localStorage.getItem('treepath:theme')
-        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        if (t !== 'light') t = 'dark'
         document.documentElement.dataset.theme = t
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#08071a' : '#1b1840')
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#000000' : '#3a2718')
       } catch (e) {}
     </script>
   </head>

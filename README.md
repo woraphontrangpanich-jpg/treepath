@@ -58,7 +58,7 @@ Open http://localhost:5173 and click **Try Sample Data**. It loads the sample fi
   - P5–P95 range from 400 draws of the model coefficients.
   - Per-input contributions that add up exactly to the total, saved scenarios, and a side-by-side comparison.
 - **Design:** follows the [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines):
-  keyboard and screen-reader labels, reduced-motion support, light/dark themes, and tabs kept in the URL.
+  keyboard and screen-reader labels, reduced-motion support, two appearances (Black, the default, and Brown & Cream), and tabs kept in the URL.
 
 ## Scripts
 

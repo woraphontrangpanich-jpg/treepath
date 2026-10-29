@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { BrainCircuit, ChartLine, FolderOpen, Moon, Network, Sun, TrendingUp } from 'lucide-react'
+import { BrainCircuit, ChartLine, Coffee, FolderOpen, Moon, Network, TrendingUp } from 'lucide-react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useStore, type Workspace } from '../state/store'
 
@@ -8,7 +8,7 @@ export function Logo() {
   return (
     <div className="flex items-center gap-2.5">
       <svg viewBox="0 0 28 28" className="size-7" aria-hidden>
-        <path d="M14 25V15M14 15C14 10 8 9 6 4M14 15c0-5 6-6 8-11" fill="none" strokeWidth="2.6" strokeLinecap="round" style={{ stroke: 'var(--pop)' }} />
+        <path d="M14 25V15M14 15C14 10 8 9 6 4M14 15c0-5 6-6 8-11" fill="none" strokeWidth="2.6" strokeLinecap="round" className="stroke-frame-ink" />
         <circle cx="14" cy="25" r="2.6" className="fill-frame-ink" />
       </svg>
       <span className="font-display text-[19px] leading-none" translate="no">
@@ -18,28 +18,44 @@ export function Logo() {
   )
 }
 
-function ThemeToggle() {
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'light')
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
+/** Two appearances: Black (the default) and Brown & Cream. */
+function Appearance() {
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme ?? 'dark')
+  const choose = (next: 'light' | 'dark') => {
     document.documentElement.dataset.theme = next
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#08071a' : '#1b1840')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#000000' : '#3a2718')
     try {
       localStorage.setItem('treepath:theme', next)
     } catch {
-      /* storage may be unavailable; the toggle still works for this session */
+      /* storage may be unavailable; the switch still works for this session */
     }
     setTheme(next)
   }
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className="press grid size-9 place-items-center rounded-full text-frame-ink/70 hover:bg-frame-ink/10 hover:text-frame-ink"
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-    >
-      {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </button>
+    <div role="radiogroup" aria-label="Appearance" className="flex rounded-full p-0.5 ring-1 ring-frame-ink/15">
+      {(
+        [
+          ['dark', 'Black', Moon],
+          ['light', 'Cream', Coffee],
+        ] as const
+      ).map(([v, label, Icon]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={theme === v}
+          onClick={() => choose(v)}
+          title={label === 'Cream' ? 'Brown & Cream appearance' : 'Black appearance'}
+          className={clsx(
+            'press flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium',
+            theme === v ? 'bg-frame-ink text-frame' : 'text-frame-ink/60 hover:text-frame-ink',
+          )}
+        >
+          <Icon className="size-3.5" />
+          <span className="hidden md:inline">{label}</span>
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -74,7 +90,7 @@ function Tabs() {
       {pill && (
         <span
           aria-hidden
-          className="absolute top-1 bottom-1 rounded-full bg-accent shadow-[0_4px_14px_-4px_rgb(91_61_245/0.7)]"
+          className="absolute top-1 bottom-1 rounded-full bg-frame-ink"
           style={{ left: pill.left, width: pill.width, transition: 'left 280ms var(--ease-in-out), width 280ms var(--ease-in-out)' }}
         />
       )}
@@ -94,7 +110,7 @@ function Tabs() {
             title={disabled ? 'Add files first' : t.label}
             className={clsx(
               'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40',
-              on ? 'text-white' : 'text-frame-ink/65 hover:text-frame-ink',
+              on ? 'text-frame' : 'text-frame-ink/60 hover:text-frame-ink',
             )}
           >
             <t.icon className="size-4 shrink-0" />
@@ -108,12 +124,12 @@ function Tabs() {
 
 export function TopBar() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 bg-frame px-5 text-frame-ink">
+    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-frame px-5 text-frame-ink">
       <Logo />
       <div className="mx-auto">
         <Tabs />
       </div>
-      <ThemeToggle />
+      <Appearance />
     </header>
   )
 }

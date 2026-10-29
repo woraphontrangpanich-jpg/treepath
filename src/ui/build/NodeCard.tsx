@@ -233,7 +233,7 @@ function CardImpl({ id, data, selected }: NodeProps<CardNode>) {
       {isFormula && !isOutcome && (
         // A solid amber band: formula cards are calculated, never read from a file.
         <div className="flex w-7 shrink-0 items-start justify-center bg-formula pt-2.5" aria-hidden>
-          <span className="font-display text-[15px] text-white italic">ƒ</span>
+          <span className="font-display text-[15px] text-bg italic">ƒ</span>
         </div>
       )}
       {body}
