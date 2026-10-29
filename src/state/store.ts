@@ -2,9 +2,9 @@ import { del, get, set } from 'idb-keyval'
 import { create } from 'zustand'
 import type { Column, Link, Table } from '../data/types'
 
-export type Workspace = 'data' | 'build' | 'scenario'
+export type Workspace = 'data' | 'build' | 'scenario' | 'charts' | 'ml'
 
-const WORKSPACES: Workspace[] = ['data', 'build', 'scenario']
+const WORKSPACES: Workspace[] = ['data', 'build', 'scenario', 'charts', 'ml']
 
 /** The URL hash holds the open tab, so links and reloads land on the same screen. */
 function workspaceFromHash(): Workspace {

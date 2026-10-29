@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
-import { Moon, Sun } from 'lucide-react'
-import { useState } from 'react'
+import { BrainCircuit, ChartLine, FolderOpen, Moon, Network, Sun, TrendingUp } from 'lucide-react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useStore, type Workspace } from '../state/store'
 
 /** The mark: a single path forking into two, drawn like a river delta. */
@@ -43,70 +43,65 @@ function ThemeToggle() {
   )
 }
 
-const STEPS: { value: Workspace; label: string }[] = [
-  { value: 'data', label: 'Files' },
-  { value: 'build', label: 'Build' },
-  { value: 'scenario', label: 'Forecast' },
+const TABS: { value: Workspace; label: string; icon: typeof FolderOpen }[] = [
+  { value: 'data', label: 'Files', icon: FolderOpen },
+  { value: 'build', label: 'Tree', icon: Network },
+  { value: 'scenario', label: 'Forecast', icon: TrendingUp },
+  { value: 'charts', label: 'Charts', icon: ChartLine },
+  { value: 'ml', label: 'Machine Learning', icon: BrainCircuit },
 ]
-const STEP_W = 128
 
-/**
- * The three screens really are a sequence, so they read as a trail: stations joined by a line,
- * the travelled part drawn in teal, and a marker that slides to the current station.
- */
-function StepTrail() {
+/** Five tools, used in any order; a pill slides under the open one. */
+function Tabs() {
   const workspace = useStore((s) => s.workspace)
   const setWorkspace = useStore((s) => s.setWorkspace)
   const hasData = useStore((s) => s.tables.length > 0)
-  const active = STEPS.findIndex((s) => s.value === workspace)
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+  const active = TABS.findIndex((t) => t.value === workspace)
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = refs.current[active]
+      if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [active])
 
   return (
-    <nav aria-label="Steps" className="relative" style={{ width: STEP_W * STEPS.length }}>
-      {/* track, then the travelled part */}
-      <div className="absolute top-[13px] h-0.5 rounded bg-line" style={{ left: STEP_W / 2, right: STEP_W / 2 }} />
-      <div
-        className="absolute top-[13px] h-0.5 origin-left rounded bg-accent"
-        style={{
-          left: STEP_W / 2,
-          width: STEP_W * (STEPS.length - 1),
-          transform: `scaleX(${active / (STEPS.length - 1)})`,
-          transition: 'transform 300ms var(--ease-in-out)',
-        }}
-      />
-      {/* sliding marker */}
-      <div
-        aria-hidden
-        className="absolute top-[5px] size-[18px] rounded-full border-[3px] border-accent bg-surface"
-        style={{ left: STEP_W / 2 - 9, transform: `translateX(${active * STEP_W}px)`, transition: 'transform 300ms var(--ease-in-out)' }}
-      />
-      <ol className="relative flex">
-        {STEPS.map((s, i) => {
-          const disabled = s.value !== 'data' && !hasData
-          const done = i < active
-          return (
-            <li key={s.value} style={{ width: STEP_W }}>
-              <button
-                type="button"
-                onClick={() => setWorkspace(s.value)}
-                disabled={disabled}
-                aria-current={i === active ? 'step' : undefined}
-                title={disabled ? 'Import data first' : undefined}
-                className="group flex w-full flex-col items-center gap-1 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <span
-                  className={clsx(
-                    'mt-[9px] size-2.5 rounded-full transition-colors',
-                    done ? 'bg-accent' : i === active ? 'bg-transparent' : 'bg-line group-hover:bg-faint',
-                  )}
-                />
-                <span className={clsx('text-[13px] transition-colors', i === active ? 'font-semibold text-ink' : 'text-muted group-hover:text-ink')}>
-                  <span className="text-faint tabular">{i + 1}</span> {s.label}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ol>
+    <nav aria-label="Tools" className="relative flex rounded-full bg-surface-2 p-1 ring-1 ring-line">
+      {pill && (
+        <span
+          aria-hidden
+          className="absolute top-1 bottom-1 rounded-full bg-ink shadow-sm"
+          style={{ left: pill.left, width: pill.width, transition: 'left 280ms var(--ease-in-out), width 280ms var(--ease-in-out)' }}
+        />
+      )}
+      {TABS.map((t, i) => {
+        const disabled = t.value !== 'data' && !hasData
+        const on = i === active
+        return (
+          <button
+            key={t.value}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
+            type="button"
+            onClick={() => setWorkspace(t.value)}
+            disabled={disabled}
+            aria-current={on ? 'page' : undefined}
+            title={disabled ? 'Add files first' : t.label}
+            className={clsx(
+              'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40',
+              on ? 'text-bg' : 'text-muted hover:text-ink',
+            )}
+          >
+            <t.icon className="size-4 shrink-0" />
+            <span className={clsx(on ? 'inline' : 'hidden lg:inline')}>{t.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }
@@ -116,7 +111,7 @@ export function TopBar() {
     <header className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-surface px-5">
       <Logo />
       <div className="mx-auto">
-        <StepTrail />
+        <Tabs />
       </div>
       <ThemeToggle />
     </header>

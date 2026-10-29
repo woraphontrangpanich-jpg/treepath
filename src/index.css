@@ -58,6 +58,14 @@
   --e-cost: #e0492b;
   --e-driver: #0b7f93;
   --e-influence: #a9b8bc;
+  /* Chart series, fixed order (validated for colour-blind separation; slots 1-3 also all-pairs for scatter). */
+  --s1: #008aa3;
+  --s2: #eb6834;
+  --s3: #6250d6;
+  --s4: #eda100;
+  --s5: #e87ba4;
+  --s6: #2a78d6;
+  --s-other: #a9b8bc;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -90,6 +98,13 @@
   --e-cost: #ff7f61;
   --e-driver: #3cc4d6;
   --e-influence: #4f6a72;
+  --s1: #20a4b8;
+  --s2: #d95926;
+  --s3: #9085e9;
+  --s4: #c98500;
+  --s5: #d55181;
+  --s6: #3987e5;
+  --s-other: #56707a;
   color-scheme: dark;
 }
 

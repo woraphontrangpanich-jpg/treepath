@@ -32,7 +32,7 @@ export async function importFile(file: File): Promise<Table[]> {
   return parseInWorker(file.name, await file.arrayBuffer())
 }
 
-export const SAMPLE_FILES = ['marketing.xlsx', 'sales.xlsx', 'weather.csv', 'regions.csv']
+export const SAMPLE_FILES = ['marketing.xlsx', 'sales.xlsx', 'weather.csv', 'regions.csv', 'customers.csv']
 
 export async function importSamples(): Promise<Table[]> {
   const results = await Promise.all(

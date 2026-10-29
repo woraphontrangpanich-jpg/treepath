@@ -130,3 +130,31 @@ writeFileSync(
 )
 
 console.log(`Wrote samples to ${outDir}: ${marketing.length - 1} marketing rows, ${sales.length - 1} sales rows`)
+
+// customers.csv — one row per customer, for Machine Learning: will they churn, and how much do they spend?
+// Churn rises with support calls and days since the last order (much more when both are high, which
+// trees can find and a straight line can't), and falls with tenure and better plans.
+{
+  const rows = [['customer_id', 'signup_date', 'region_code', 'plan', 'monthly_spend', 'tenure_months', 'support_calls', 'days_since_last_order', 'used_voucher', 'total_spend', 'churned']]
+  const plans = ['Basic', 'Plus', 'Premium']
+  for (let i = 1; i <= 2000; i++) {
+    const u = rand()
+    const region = u < 0.55 ? regions[0] : u < 0.8 ? regions[1] : regions[2]
+    const pu = rand()
+    const plan = pu < 0.5 ? 0 : pu < 0.82 ? 1 : 2
+    const tenure = Math.max(1, Math.round(-Math.log(Math.max(rand(), 1e-9)) * 14))
+    const spend = round(Math.max(5, 22 + plan * 18 + gauss() * 9 + (region.code === 'BKK' ? 4 : 0)), 2)
+    const calls = Math.min(9, Math.floor(-Math.log(Math.max(rand(), 1e-9)) * 1.4))
+    const days = Math.max(0, Math.round(-Math.log(Math.max(rand(), 1e-9)) * 24))
+    const voucher = rand() < 0.4
+    const z =
+      -1.2 + 0.32 * calls - 0.05 * tenure + 0.022 * days - 0.5 * plan + (region.code === 'HKT' ? 0.45 : 0) - 0.015 * (spend - 40) - (voucher ? 0.35 : 0) +
+      (days > 40 && calls >= 3 ? 1.8 : 0)
+    const churn = rand() < 1 / (1 + Math.exp(-z))
+    const signup = iso(Date.UTC(2026, 5, 30) - tenure * 30.4 * 86400000)
+    const total = round(spend * tenure * (0.85 + rand() * 0.3), 2)
+    rows.push([`CUST-${String(i).padStart(4, '0')}`, signup, region.code, plans[plan], spend, tenure, calls, days, voucher ? 'yes' : 'no', total, churn ? 'yes' : 'no'])
+  }
+  writeFileSync(join(outDir, 'customers.csv'), toCsv(rows))
+  console.log(`Wrote customers.csv: ${rows.length - 1} customers, ${rows.filter((r) => r[10] === 'yes').length} churned`)
+}

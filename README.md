@@ -6,13 +6,15 @@ Upload one or more Excel/CSV files, draw how your numbers connect (exact formula
 history), then type a change like **"increase Ad Spend 20%"** to see how it reaches Revenue or Profit, with a
 likely range and every step of the calculation. **Runs entirely in your browser; your files never leave your device.**
 
-## How it works: 3 steps
+## Five tools
 
 | Step | What you do |
 |---|---|
 | **1 · Files** | Drop in `.xlsx / .xls / .csv / .tsv / .ods` files. Every file appears as a card on one canvas; draw a line from a column in one file to the matching column in another (e.g. `customer_id` → `ID`). Click a file to see its data and settings. |
-| **2 · Build** | Click metrics to add them as cards. Add **Formula** cards like `[Orders] * [Realized Price]`; their links draw themselves. Drag from a card's top dot to the card it affects, and Treepath learns that effect from your history with linear regression. |
+| **2 · Tree** | Click metrics to add them as cards. Add **Formula** cards like `[Orders] * [Realized Price]`; their links draw themselves. Drag from a card's top dot to the card it affects, and Treepath learns that effect from your history with linear regression. |
 | **3 · Forecast** | Type a change or use the input controls. See baseline → forecast, the change, a P5–P95 range, what drove it, and the full calculation. The affected path lights up green (up) or red (down). |
+| **4 · Charts** | Pick a file and what you want to see: **Trend over time** (with a fitted trend line, significance and a forecast with a likely range), **Compare groups**, **Relationship** (scatter with a regression line and a “what if” slider) or **Spread** (histogram, average, middle value, typical range). Every chart explains itself in a sentence or two and can show its numbers as a table. |
+| **5 · Machine Learning** | Pick a column to predict, as a category (classification) or a number (regression), tick the columns to learn from (including columns from connected lookup files), and choose **Boosted trees (XGBoost-style)** or **Logistic / Linear regression**. Defaults work out of the box; Quick / Balanced / Thorough presets and custom settings in plain words are there if you want them. You get a plain verdict against guessing, accuracy / precision / recall / AUC or R² / error, what matters most, a right-vs-wrong grid or predicted-vs-real chart, a “try a prediction” form, and a CSV of predictions for every row. Training runs in a background worker. |
 
 ## Quick start
 
@@ -70,7 +72,7 @@ Open http://localhost:5173 and click **Try Sample Data**. It loads the sample fi
 ## Sample data
 
 `public/samples/` holds synthetic but structured data: 18 months × 3 regions of ad spend and vouchers
-(`marketing.xlsx`), sales (`sales.xlsx`), rain (`weather.csv`) and a region lookup (`regions.csv`). Orders
+(`marketing.xlsx`), sales (`sales.xlsx`), rain (`weather.csv`), a region lookup (`regions.csv`) and 2,000 customers with a churn flag (`customers.csv`) for Machine Learning. Orders
 really respond to ad spend (1-day lag), voucher coverage and rain, so the regression has a signal to find.
 
 ## Deploy

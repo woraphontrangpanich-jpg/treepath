@@ -2,6 +2,8 @@ import { clsx } from 'clsx'
 import { Loader2, X } from 'lucide-react'
 import { useStore } from './state/store'
 import { BuildWorkspace } from './ui/build/BuildWorkspace'
+import { ChartsWorkspace } from './ui/charts/ChartsWorkspace'
+import { MLWorkspace } from './ui/ml/MLWorkspace'
 import { DataWorkspace } from './ui/data/DataWorkspace'
 import { ScenarioWorkspace } from './ui/scenario/ScenarioWorkspace'
 import { TopBar } from './ui/TopBar'
@@ -61,6 +63,10 @@ export default function App() {
         </div>
       ) : workspace === 'data' ? (
         <DataWorkspace />
+      ) : workspace === 'ml' ? (
+        <MLWorkspace />
+      ) : workspace === 'charts' ? (
+        <ChartsWorkspace />
       ) : workspace === 'build' ? (
         <BuildWorkspace />
       ) : (
