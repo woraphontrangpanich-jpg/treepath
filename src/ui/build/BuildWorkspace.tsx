@@ -70,7 +70,7 @@ function TreeMenu({ tree }: { tree: Tree }) {
         <ChevronDown className="size-3.5 text-faint" />
       </Button>
       {open && (
-        <div className="absolute top-full left-0 z-30 mt-1 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-xl">
+        <div className="popover absolute top-full left-0 z-30 mt-1.5 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-[0_16px_40px_-16px_rgb(23_35_56/0.4)]">
           <div className="max-h-60 overflow-y-auto">
             {trees.map((t) => (
               <button key={t.id} type="button" onClick={act(() => openTree(t.id))} className={clsx(item, t.id === tree.id && 'bg-accent-soft')}>
@@ -185,7 +185,7 @@ function Editor({ tree }: { tree: Tree }) {
       <Library tree={tree} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Toolbar tree={tree} errorCount={errors} />
-        <div className="relative min-h-0 flex-1">
+        <div className="contour relative min-h-0 flex-1">
           <Canvas tree={tree} model={model} />
         </div>
       </div>

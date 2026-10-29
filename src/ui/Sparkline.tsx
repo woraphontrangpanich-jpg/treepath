@@ -1,6 +1,6 @@
 import type { SeriesPoint } from '../data/types'
 
-export function Sparkline({ points, width = 96, height = 24 }: { points: SeriesPoint[]; width?: number; height?: number }) {
+export function Sparkline({ points, width = 96, height = 24, className = 'stroke-accent' }: { points: SeriesPoint[]; width?: number; height?: number; className?: string }) {
   if (points.length < 2) return <span className="text-xs text-faint">—</span>
   let min = Infinity
   let max = -Infinity
@@ -18,7 +18,7 @@ export function Sparkline({ points, width = 96, height = 24 }: { points: SeriesP
     .join('')
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible" aria-hidden>
-      <path d={d} fill="none" strokeWidth="1.5" strokeLinejoin="round" className="stroke-accent" />
+      <path d={d} fill="none" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" className={className} />
     </svg>
   )
 }

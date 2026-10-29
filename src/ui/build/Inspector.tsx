@@ -26,7 +26,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3 border-t border-line px-4 py-4">
-      <h3 className="text-[11px] font-semibold tracking-wider text-muted uppercase">{title}</h3>
+      <h3 className="text-[13px] font-semibold text-ink">{title}</h3>
       {children}
     </section>
   )
@@ -59,10 +59,9 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
   return (
     <>
       <div className="px-4 py-4">
-        <h2 className="text-[11px] font-semibold tracking-wider text-muted uppercase">Tree</h2>
+        <h2 className="text-[13px] font-semibold text-ink">Tree</h2>
         <p className="mt-1 text-sm text-muted">
-          {plural(tree.nodes.length, 'card')} · {plural(tree.edges.length, 'link')} ·{' '}
-          {plural(tree.edges.filter((e) => e.role === 'driver').length, 'model driver')}
+          {plural(tree.nodes.length, 'card')}, {plural(tree.edges.length, 'link')}, {plural(tree.edges.filter((e) => e.role === 'driver').length, 'learned effect')}
         </p>
       </div>
       <Section title="Outcome">
@@ -77,12 +76,12 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
         {outcome && outcomeSummary && (
           <div className="rounded-lg bg-accent-soft px-3 py-2">
             <div className="text-xs text-muted">Latest {tree.grain}</div>
-            <div className="font-mono text-2xl tabular">{formatValue(outcomeSummary.latest?.value, model.series.byNode.get(outcome.id)?.format)}</div>
+            <div className="font-display text-2xl tabular">{formatValue(outcomeSummary.latest?.value, model.series.byNode.get(outcome.id)?.format)}</div>
           </div>
         )}
         <p className="text-[11px] leading-4 text-faint">The number you want to forecast, e.g. Revenue or Profit.</p>
       </Section>
-      <Section title={`Checks${model.issues.length ? ` · ${model.issues.length}` : ''}`}>
+      <Section title={model.issues.length ? `Checks (${model.issues.length})` : 'Checks'}>
         {model.issues.length === 0 ? (
           <p className="text-sm text-up">No problems found.</p>
         ) : (
@@ -146,7 +145,7 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
     <>
       <div className="space-y-3 px-4 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold tracking-wider text-muted uppercase">Card</h2>
+          <h2 className="text-[13px] font-semibold text-ink">Card</h2>
           {tree.outcomeId === node.id && (
             <Badge tone="accent">
               <Target className="size-3" />
@@ -216,11 +215,11 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
           ) : (
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
               <dt className="text-muted">Latest</dt>
-              <dd className="text-right font-mono tabular">{formatValue(summary?.latest?.value, series?.format)}</dd>
+              <dd className="text-right tabular">{formatValue(summary?.latest?.value, series?.format)}</dd>
               <dt className="text-muted">Previous</dt>
-              <dd className="text-right font-mono tabular">{formatValue(summary?.previous?.value, series?.format)}</dd>
+              <dd className="text-right tabular">{formatValue(summary?.previous?.value, series?.format)}</dd>
               <dt className="text-muted">Mean of last 28</dt>
-              <dd className="text-right font-mono tabular">{formatValue(summary?.recentMean, series?.format)}</dd>
+              <dd className="text-right tabular">{formatValue(summary?.recentMean, series?.format)}</dd>
               <dt className="text-muted">History</dt>
               <dd className="text-right text-xs text-muted tabular">
                 {series?.points.length ?? 0} {tree.grain}s{series?.points[0] && <> from {series.points[0].date}</>}
@@ -228,7 +227,7 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
               {summary?.gap !== null && summary?.gap !== undefined && (
                 <>
                   <dt className="text-muted">Gap vs actual</dt>
-                  <dd className="text-right font-mono tabular">{formatValue(summary.gap, series?.format)}</dd>
+                  <dd className="text-right tabular">{formatValue(summary.gap, series?.format)}</dd>
                 </>
               )}
             </dl>
@@ -316,7 +315,7 @@ function FormulaEditor({ tree, node }: { tree: Tree; node: TreeNode }) {
           return unknown.length ? (
             <p className="text-xs text-down">No card named {unknown.map((u) => `"${u}"`).join(', ')}. Add it, or fix the spelling.</p>
           ) : (
-            <p className="text-xs text-up">Valid · {plural(parsed.refs.length, 'input')}</p>
+            <p className="text-xs text-up">Looks right: {plural(parsed.refs.length, 'input')}</p>
           )
         })()}
       <div>
@@ -432,7 +431,7 @@ function BindingEditor({ binding, onChange, onRemove }: { binding?: MetricBindin
           <div key={i} className="rounded-lg border border-line p-2.5">
             <div className="mb-2 flex items-center justify-between text-xs">
               <span className="font-medium">
-                {fc && fc.table.id !== table?.id && <span className="text-faint">{fc.table.name} · </span>}
+                {fc && fc.table.id !== table?.id && <span className="text-faint">{fc.table.name} › </span>}
                 {f.column}
               </span>
               <button type="button" onClick={() => setFilters(filters.filter((_, j) => j !== i))} className="text-faint hover:text-down" aria-label="Remove filter">
@@ -470,7 +469,7 @@ function BindingEditor({ binding, onChange, onRemove }: { binding?: MetricBindin
           <option value="">+ Add filter…</option>
           {filterColumns.map(({ table: t, column: c }) => (
             <option key={`${t.id}|${c.name}`} value={JSON.stringify([t.id, c.name])}>
-              {t.id === table?.id ? c.name : `${t.name} · ${c.name} (linked)`}
+              {t.id === table?.id ? c.name : `${c.name} from ${t.name}`}
             </option>
           ))}
         </Select>
@@ -502,7 +501,7 @@ function EdgeInspector({ tree, edgeId, model }: { tree: Tree; edgeId: string; mo
   return (
     <>
       <div className="space-y-3 px-4 py-4">
-        <h2 className="text-[11px] font-semibold tracking-wider text-muted uppercase">Link</h2>
+        <h2 className="text-[13px] font-semibold text-ink">Link</h2>
         <div className="space-y-1 text-sm">
           <button type="button" onClick={() => t && select({ kind: 'node', id: t.id })} className="block font-semibold hover:underline">
             {t?.label}

@@ -9,7 +9,7 @@ export function Legend() {
   return (
     <div className="w-56 rounded-xl border border-line bg-surface/95 p-3 shadow-sm backdrop-blur">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-[11px] font-semibold tracking-wider text-muted uppercase">Links</span>
+        <span className="text-[13px] font-semibold text-ink">Links</span>
         <button type="button" onClick={toggle} className="text-faint hover:text-ink" aria-label="Hide legend">
           <X className="size-3.5" />
         </button>

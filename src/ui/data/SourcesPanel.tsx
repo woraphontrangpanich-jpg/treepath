@@ -47,7 +47,7 @@ export function SourcesPanel() {
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-line bg-surface">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h2 className="text-[13px] font-semibold tracking-wide text-muted uppercase">Sources</h2>
+        <h2 className="text-[13px] font-semibold text-ink">Sources</h2>
         <FilePicker>
           <Plus className="size-4" />
           Add Files
@@ -78,7 +78,7 @@ export function SourcesPanel() {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{ts.length > 1 ? t.sheetName : t.name}</span>
                     <span className="block text-xs text-muted tabular">
-                      {t.rows.length.toLocaleString()} rows · {metrics} metric{metrics === 1 ? '' : 's'}
+                      {t.rows.length.toLocaleString()} rows, {metrics} metric{metrics === 1 ? '' : 's'}
                     </span>
                   </span>
                 </button>

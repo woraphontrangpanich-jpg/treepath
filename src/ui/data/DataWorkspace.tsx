@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { FileUp, GitBranch, Link2, Sparkles, Upload } from 'lucide-react'
+import { Sparkles, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { useStore } from '../../state/store'
 import { Button } from '../primitives'
@@ -43,47 +43,88 @@ function DropZone({ children }: { children: React.ReactNode }) {
   )
 }
 
+/** Hero: a tiny tree where one change climbs to the outcome, the way Forecast shows it. */
+function HeroTree() {
+  const node = (x: number, y: number, w: number, label: string, value: string, delta: string, delay: number, opts: { dark?: boolean; down?: boolean } = {}) => (
+    <g transform={`translate(${x} ${y})`}>
+      <rect width={w} height="58" rx={opts.dark ? 16 : 10} className={opts.dark ? 'fill-ink' : 'fill-surface stroke-line'} strokeWidth="1" />
+      <text x="14" y="22" className={opts.dark ? 'fill-bg' : 'fill-ink'} style={{ fontSize: 12.5, fontWeight: 600 }}>
+        {label}
+      </text>
+      <text x="14" y="45" className={opts.dark ? 'fill-bg' : 'fill-ink'} style={{ fontSize: 19, fontWeight: 600, fontStretch: '125%' }}>
+        {value}
+      </text>
+      <g className="hero-chip" style={{ animationDelay: `${delay}ms` }}>
+        <rect x={w - 62} y="31" width="50" height="19" rx="9.5" className={opts.down ? 'fill-down' : 'fill-up'} />
+        <text x={w - 37} y="44.5" textAnchor="middle" className="fill-white" style={{ fontSize: 11, fontWeight: 700 }}>
+          {delta}
+        </text>
+      </g>
+    </g>
+  )
+  const edge = (d: string, delay: number, tone: 'up' | 'down') => (
+    <g>
+      <path d={d} fill="none" strokeWidth="1.75" className="stroke-line" />
+      <path d={d} fill="none" strokeWidth="2.5" strokeLinecap="round" pathLength={1} className={`hero-trace ${tone === 'up' ? 'stroke-up' : 'stroke-down'}`} style={{ animationDelay: `${delay}ms` }} />
+    </g>
+  )
+  return (
+    <svg viewBox="0 0 460 380" className="w-full max-w-[460px]" role="img" aria-label="Example: Ad Spend up 20% raises Orders 7.8%, Revenue 7.3% and Net Revenue 5%">
+      {edge('M300 300 C 300 260, 110 280, 110 236', 300, 'up')}
+      {edge('M110 178 C 110 150, 110 150, 110 132', 900, 'up')}
+      {edge('M110 74 C 110 40, 230 90, 230 78', 1500, 'up')}
+      {edge('M330 300 C 380 200, 300 120, 270 78', 1500, 'down')}
+      {node(150, 20, 170, 'Net Revenue', '49.2K', '+5.0%', 2100, { dark: true })}
+      {node(20, 74, 180, 'Revenue', '97.7K', '+7.3%', 1500)}
+      {node(20, 178, 180, 'Orders', '7,975', '+7.8%', 900)}
+      {node(240, 300, 190, 'Ad Spend', '12.6K', '+20%', 200)}
+      <text x="250" y="200" className="fill-down hero-chip" style={{ fontSize: 11.5, animationDelay: '1800ms' }}>
+        more ad cost
+      </text>
+    </svg>
+  )
+}
+
 function Welcome() {
   const { loadSamples } = useImport()
-  const steps = [
-    { icon: FileUp, title: 'Data', text: 'Add Excel or CSV files. Dates, IDs and metrics are detected for you.' },
-    { icon: GitBranch, title: 'Build', text: 'Draw how your metrics add up to one outcome, like Net Revenue.' },
-    { icon: Link2, title: 'Forecast', text: 'Type a change, like “increase Ad Spend 20%”, and see the impact.' },
-  ]
+  const steps = ['Add your Excel files', 'Draw how the numbers connect', 'Forecast a change']
   return (
-    <div className="grid flex-1 place-items-center overflow-y-auto p-8">
-      <div className="w-full max-w-3xl text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-balance">See how every change reaches your bottom line.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-base text-muted text-balance">
-          Upload your Excel files, draw how your numbers connect, and forecast what happens to revenue or profit when something
-          changes. Everything runs in your browser; your files never leave this device.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <FilePicker variant="primary">
-            <Upload className="size-4" />
-            Import Excel / CSV
-          </FilePicker>
-          <Button onClick={() => void loadSamples()}>
-            <Sparkles className="size-4" />
-            Try Sample Data
-          </Button>
-        </div>
-        <p className="mt-3 text-xs text-faint">or drop files anywhere on this page · .xlsx .xls .csv .tsv .ods</p>
-
-        <ol className="mt-12 grid gap-4 text-left sm:grid-cols-3">
-          {steps.map((s, i) => (
-            <li key={s.title} className="rounded-xl border border-line bg-surface p-4">
-              <div className="flex items-center gap-2">
-                <span className="grid size-7 place-items-center rounded-lg bg-accent-soft text-accent">
-                  <s.icon className="size-4" />
+    <div className="flex-1 overflow-y-auto">
+      <div className="mx-auto grid min-h-full max-w-6xl items-center gap-12 px-8 py-12 lg:grid-cols-[1.05fr_1fr]">
+        <div>
+          <h1 className="font-display text-[44px] leading-[1.05] text-balance sm:text-[56px]">Pull one lever. See it reach the bottom line.</h1>
+          <p className="mt-6 max-w-[52ch] text-[16px] leading-relaxed text-muted">
+            Treepath turns your spreadsheets into a tree of how your numbers connect, then forecasts what a change does to revenue or
+            profit. It runs in your browser, so your files stay on this device.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <FilePicker variant="primary">
+              <Upload className="size-4" />
+              Import Excel or CSV
+            </FilePicker>
+            <Button onClick={() => void loadSamples()}>
+              <Sparkles className="size-4" />
+              Try Sample Data
+            </Button>
+          </div>
+          <p className="mt-3 text-[13px] text-faint">or drop .xlsx, .xls, .csv, .tsv or .ods files anywhere on this page</p>
+          <ol className="mt-12 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted">
+            {steps.map((s, i) => (
+              <li key={s} className="flex items-center gap-3">
+                <span className="flex items-center gap-2">
+                  <span className="grid size-5 place-items-center rounded-full bg-ink text-[11px] font-semibold text-bg tabular">{i + 1}</span>
+                  {s}
                 </span>
-                <span className="text-xs font-medium text-faint">Step {i + 1}</span>
-              </div>
-              <h3 className="mt-3 font-semibold">{s.title}</h3>
-              <p className="mt-1 text-sm text-muted">{s.text}</p>
-            </li>
-          ))}
-        </ol>
+                {i < steps.length - 1 && <span aria-hidden className="h-px w-6 bg-line" />}
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="contour grid place-items-center overflow-hidden rounded-[28px] border border-line p-6">
+          <div className="relative w-full">
+            <HeroTree />
+          </div>
+        </div>
       </div>
     </div>
   )

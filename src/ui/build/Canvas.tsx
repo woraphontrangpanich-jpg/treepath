@@ -1,7 +1,5 @@
 import {
   applyNodeChanges,
-  Background,
-  BackgroundVariant,
   Controls,
   Panel,
   ReactFlow,
@@ -53,6 +51,10 @@ export function useAddFromPayload() {
 export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel; scenario?: ScenarioResult }) {
   const readOnly = !!scenario
   const onPath = scenario && scenario.path.length > 0 ? new Set(scenario.path) : null
+  // The pulse climbs the path in calculation order; each step starts a beat after the last.
+  const STEP_MS = 140
+  const pulseKey = scenario ? `${scenario.path.join('|')}:${scenario.outcome?.value ?? ''}` : ''
+  const order = new Map(scenario?.path.map((id, i) => [id, i]) ?? [])
   const selection = useTrees((s) => s.selection)
   const { select, moveNode, removeNodes, removeEdges, addEdge } = useTrees.getState()
   const notify = useStore((s) => s.notify)
@@ -82,6 +84,8 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
           source: kindOf(n) === 'metric' && !scenario ? model.sourceLabel(n.id) : undefined,
           scenario: scenario?.nodes.get(n.id),
           dimmed: !!onPath && !onPath.has(n.id),
+          pulseDelay: order.has(n.id) ? order.get(n.id)! * STEP_MS : undefined,
+          pulseKey: order.has(n.id) ? pulseKey : undefined,
         },
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onPath derives from scenario
@@ -109,7 +113,18 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
         type: 'role',
         selected: selection?.kind === 'edge' && selection.id === e.id,
         deletable: !readOnly && !ROLES[e.role].derived,
-        data: { edge: e, dimmed: !!onPath && !(NUMERIC_ROLES.has(e.role) && onPath.has(e.source) && onPath.has(e.target)) },
+        data: {
+          edge: e,
+          dimmed: !!onPath && !(NUMERIC_ROLES.has(e.role) && onPath.has(e.source) && onPath.has(e.target)),
+          flow:
+            onPath && NUMERIC_ROLES.has(e.role) && onPath.has(e.source) && onPath.has(e.target)
+              ? {
+                  tone: (scenario!.nodes.get(e.target)?.delta ?? 0) >= 0 ? ('up' as const) : ('down' as const),
+                  delay: (order.get(e.source) ?? 0) * STEP_MS,
+                  key: pulseKey,
+                }
+              : undefined,
+        },
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onPath derives from scenario
     [tree.edges, selection, scenario, readOnly],
@@ -192,7 +207,6 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
       deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
       connectionRadius={28}
     >
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--line)" />
       <Controls showInteractive={false} position="bottom-right" />
       <Panel position="top-right">
         <Legend />

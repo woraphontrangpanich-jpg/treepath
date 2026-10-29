@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f4f6f4" />
+    <meta name="theme-color" content="#eef2ec" />
     <meta name="description" content="Treepath — build metric trees from Excel and forecast how changes ripple to your outcome." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <title>Treepath</title>
@@ -19,7 +19,7 @@
         var t = localStorage.getItem('treepath:theme')
         if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
         document.documentElement.dataset.theme = t
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#0b1210' : '#f4f6f4')
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', t === 'dark' ? '#0e1726' : '#eef2ec')
       } catch (e) {}
     </script>
   </head>

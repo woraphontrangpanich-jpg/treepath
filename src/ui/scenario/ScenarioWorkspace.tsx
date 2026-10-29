@@ -11,7 +11,7 @@ import { activeScenario, activeTree, useTrees } from '../../state/trees'
 import { kindOf, type AdjustmentKind, type Assumption, type Scenario, type Tree } from '../../tree/types'
 import { Canvas } from '../build/Canvas'
 import { useTreeModel, type TreeModel } from '../build/useTreeModel'
-import { Badge, Button, Select } from '../primitives'
+import { Button, Select } from '../primitives'
 
 const WINDOWS: Record<Grain, number[]> = { day: [1, 7, 28, 90], week: [1, 4, 13], month: [1, 3, 12] }
 
@@ -19,8 +19,8 @@ function Section({ n, title, aside, children, className }: { n?: number; title: 
   return (
     <section className={clsx('border-b border-line px-5 py-4', className)}>
       <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h3 className="text-[11px] font-semibold tracking-wider text-muted uppercase">
-          {n !== undefined && <span className="mr-1.5 text-accent">{n}</span>}
+        <h3 className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+          {n !== undefined && <span className="grid size-5 place-items-center rounded-full bg-accent text-[11px] text-accent-ink tabular">{n}</span>}
           {title}
         </h3>
         {aside && <span className="text-[11px] text-faint">{aside}</span>}
@@ -35,7 +35,7 @@ function Collapsible({ title, children, defaultOpen = false }: { title: string; 
   return (
     <section className="border-b border-line">
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-5 py-3 text-left hover:bg-surface-2" aria-expanded={open}>
-        <span className="text-[11px] font-semibold tracking-wider text-muted uppercase">{title}</span>
+        <span className="text-[13px] font-semibold text-ink">{title}</span>
         <ChevronDown className={clsx('size-4 text-faint transition-transform', open && 'rotate-180')} />
       </button>
       {open && <div className="px-5 pb-4">{children}</div>}
@@ -78,7 +78,7 @@ function ScenarioView({ tree, scenario }: { tree: Tree; scenario: Scenario }) {
   )
   return (
     <div className="flex min-h-0 flex-1">
-      <div className="relative min-w-0 flex-1">
+      <div className="contour relative min-w-0 flex-1">
         {scenario.assumptions.length > 0 && (
           <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-full bg-ink px-3 py-1 text-xs font-medium text-bg shadow">
             {scenario.name}: green cards go up, red go down
@@ -99,7 +99,7 @@ function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scen
   return (
     <aside className="flex w-[440px] shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-line bg-surface">
       <div className="border-b border-line px-5 pt-4 pb-3">
-        <div className="text-[11px] font-semibold tracking-wider text-accent uppercase">Forecast</div>
+        <div className="text-[13px] font-semibold text-accent">Forecast</div>
         <h2 className="mt-0.5 text-lg font-semibold">Change an input, follow it to the outcome</h2>
         {errors.length > 0 && (
           <p className="mt-2 flex items-start gap-2 rounded-lg bg-down-soft px-3 py-2 text-xs">
@@ -220,55 +220,47 @@ function OutcomeEstimate({ tree, result, fmtOf }: { tree: Tree; result: Scenario
   const fmt = fmtOf(outcomeNode.id)
   const up = o.delta >= 0
   const evidence = {
-    'no-change': 'Baseline: no change applied yet',
-    none: 'This change does not reach the outcome through calculation links',
+    'no-change': 'No change applied yet',
+    none: 'This change doesn’t reach the outcome through calculating links',
     formula: 'Exact formulas only',
-    model: 'Exact formulas + fitted history',
+    model: 'Exact formulas and effects learned from history',
   }[result.evidence]
   return (
     <Section n={2} title="Outcome estimate" aside={`per ${tree.grain}`}>
-      <div className="rounded-xl border border-line bg-surface-2 p-4">
-        <div className="text-xs text-muted">{outcomeNode.label}</div>
-        <div className="mt-2 grid grid-cols-3 gap-3">
-          <div>
-            <div className="text-[10px] font-semibold tracking-wider text-faint uppercase">Baseline</div>
-            <div className="font-mono text-lg tabular">{formatValue(o.base, fmt)}</div>
-          </div>
-          <div>
-            <div className="text-[10px] font-semibold tracking-wider text-faint uppercase">Scenario</div>
-            <div className="font-mono text-2xl font-medium text-accent tabular">{formatValue(o.value, fmt)}</div>
-          </div>
-          <div>
-            <div className="text-[10px] font-semibold tracking-wider text-faint uppercase">Change</div>
-            <div className={clsx('font-mono text-lg tabular', o.affected ? (up ? 'text-up' : 'text-down') : 'text-muted')}>
-              {o.affected ? (
-                <>
-                  {up ? '+' : ''}
-                  {formatValue(o.delta, fmt)}
-                  <span className="ml-1 text-xs">{formatChange(o.pct)}</span>
-                </>
-              ) : (
-                '0'
-              )}
-            </div>
-          </div>
+      <div className="rounded-[20px] bg-ink p-5 text-bg shadow-[0_18px_40px_-24px_rgb(23_35_56/0.7)]">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13px] font-medium text-bg/70">{outcomeNode.label}</span>
+          {o.affected && (
+            <span className={clsx('rounded-full px-2.5 py-0.5 text-[13px] font-semibold text-white tabular', up ? 'bg-up' : 'bg-down')}>
+              {formatChange(o.pct)}
+            </span>
+          )}
         </div>
+        <div key={o.value} className="value-in mt-2 font-display text-[40px] leading-none">
+          {formatValue(o.value, fmt)}
+        </div>
+        <p className="mt-2 text-[13px] text-bg/70 tabular">
+          {o.affected ? (
+            <>
+              from {formatValue(o.base, fmt)}, {up ? 'up' : 'down'} {formatValue(Math.abs(o.delta), fmt)}
+            </>
+          ) : (
+            <>baseline, nothing changed yet</>
+          )}
+        </p>
         {result.range && (
-          <div className="mt-3 border-t border-line pt-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted">Likely range (P5–P95)</span>
-              <span className="font-mono tabular">
-                {formatValue(result.range.p5, fmt)} – {formatValue(result.range.p95, fmt)}
+          <div className="mt-4 border-t border-bg/15 pt-3">
+            <div className="flex items-center justify-between text-[12.5px]">
+              <span className="text-bg/70">Likely range</span>
+              <span className="tabular">
+                {formatValue(result.range.p5, fmt)} to {formatValue(result.range.p95, fmt)}
               </span>
             </div>
             <RangeBar base={o.base} value={o.value} p5={result.range.p5} p95={result.range.p95} />
-            <p className="mt-1 text-[10.5px] text-faint">From {result.range.draws} draws of the fitted model coefficients.</p>
+            <p className="mt-1.5 text-[11.5px] text-bg/55">9 in 10 outcomes fall in this band, based on how certain each learned effect is.</p>
           </div>
         )}
-        <div className="mt-3 flex items-center gap-2 border-t border-line pt-3 text-xs">
-          <span className="text-muted">Evidence</span>
-          <Badge tone={result.evidence === 'model' ? 'accent' : result.evidence === 'formula' ? 'formula' : 'neutral'}>{evidence}</Badge>
-        </div>
+        <p className="mt-3 border-t border-bg/15 pt-3 text-[12px] text-bg/70">{evidence}</p>
       </div>
     </Section>
   )
@@ -280,11 +272,11 @@ function RangeBar({ base, value, p5, p95 }: { base: number; value: number; p5: n
   const span = hi - lo || 1
   const pos = (v: number) => `${((v - lo) / span) * 100}%`
   return (
-    <div className="relative mt-2 h-4">
-      <div className="absolute top-1.5 h-1 w-full rounded bg-line" />
-      <div className="absolute top-1 h-2 rounded bg-accent/30" style={{ left: pos(p5), width: `calc(${pos(p95)} - ${pos(p5)})` }} />
-      <div className="absolute top-0 h-4 w-0.5 bg-faint" style={{ left: pos(base) }} title="baseline" />
-      <div className="absolute top-0 h-4 w-1 -translate-x-1/2 rounded bg-accent" style={{ left: pos(value) }} title="scenario" />
+    <div className="relative mt-2.5 h-4" aria-hidden>
+      <div className="absolute top-[7px] h-0.5 w-full rounded bg-bg/15" />
+      <div className="absolute top-[5px] h-1.5 rounded-full bg-accent" style={{ left: pos(p5), width: `calc(${pos(p95)} - ${pos(p5)})` }} />
+      <div className="absolute top-0.5 h-3 w-px bg-bg/50" style={{ left: pos(base) }} title="baseline" />
+      <div className="absolute top-0 size-4 -translate-x-1/2 rounded-full border-2 border-ink bg-bg" style={{ left: pos(value) }} title="forecast" />
     </div>
   )
 }
@@ -345,7 +337,7 @@ function InputRow({ tree, nodeId, base, assumption, fmt }: { tree: Tree; nodeId:
             }}
             placeholder={kind === 'pct' ? '0' : kind === 'set' ? formatValue(base, fmt) : '0'}
             aria-label={`${node.label} ${KIND_LABEL[kind]}`}
-            className="h-7 w-full rounded-md border border-line bg-surface px-2 pr-8 font-mono text-xs outline-none focus:border-accent"
+            className="h-7 w-full rounded-md border border-line bg-surface px-2 pr-8 text-xs outline-none focus:border-accent"
           />
           {unit && <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[11px] text-faint">{unit}</span>}
         </div>
@@ -398,7 +390,7 @@ function InputControls({ tree, scenario, model, result, fmtOf }: { tree: Tree; s
         {inputs.length === 0 && <p className="text-sm text-muted">No input cards with data yet. Add metric cards in Build.</p>}
       </Section>
       {modelled.length > 0 && (
-        <Collapsible title="Advanced · override model estimates" defaultOpen={modelled.some((n) => assumed.has(n.id))}>
+        <Collapsible title="Override a learned estimate" defaultOpen={modelled.some((n) => assumed.has(n.id))}>
           <p className="mb-2 text-[11px] text-faint">Setting one of these replaces its model estimate with your own number.</p>
           <div className="space-y-2">
             {modelled.map((n) => (
@@ -434,7 +426,7 @@ function ScenarioManager({ tree, scenario, model, fmtOf }: { tree: Tree; scenari
             className={clsx('rounded-lg px-2.5 py-1 text-xs font-medium ring-1', s.id === scenario.id ? 'bg-ink text-bg ring-ink' : 'ring-line hover:bg-surface-2')}
           >
             {s.name}
-            {s.assumptions.length > 0 && <span className="ml-1 opacity-60">· {s.assumptions.length}</span>}
+            {s.assumptions.length > 0 && <span className="ml-1.5 opacity-60 tabular">{s.assumptions.length}</span>}
           </button>
         ))}
         <Button size="sm" variant="ghost" onClick={() => addScenario(false)} title="New empty scenario" aria-label="New scenario">
@@ -478,8 +470,8 @@ function ScenarioManager({ tree, scenario, model, fmtOf }: { tree: Tree; scenari
             {compare.map(({ s, r }) => (
               <tr key={s.id} className={clsx('border-t border-line', s.id === scenario.id && 'font-semibold')}>
                 <td className="py-1.5">{s.name}</td>
-                <td className="py-1.5 text-right font-mono tabular">{formatValue(r?.value, outcomeFmt)}</td>
-                <td className={clsx('py-1.5 text-right font-mono tabular', r && r.delta > 0 ? 'text-up' : r && r.delta < 0 ? 'text-down' : 'text-muted')}>
+                <td className="py-1.5 text-right tabular">{formatValue(r?.value, outcomeFmt)}</td>
+                <td className={clsx('py-1.5 text-right tabular', r && r.delta > 0 ? 'text-up' : r && r.delta < 0 ? 'text-down' : 'text-muted')}>
                   {r?.affected ? formatChange(r.pct) : '—'}
                 </td>
               </tr>
@@ -502,7 +494,7 @@ function Drivers({ tree, result, fmtOf }: { tree: Tree; result: ScenarioResult; 
             <div key={i}>
               <div className="flex justify-between text-xs">
                 <span className={clsx(!c.nodeId && 'text-muted italic')}>{c.label}</span>
-                <span className={clsx('font-mono tabular', c.delta >= 0 ? 'text-up' : 'text-down')}>
+                <span className={clsx('tabular', c.delta >= 0 ? 'text-up' : 'text-down')}>
                   {c.delta >= 0 ? '+' : ''}
                   {formatValue(c.delta, outcomeFmt)}
                 </span>
@@ -523,10 +515,10 @@ function Drivers({ tree, result, fmtOf }: { tree: Tree; result: ScenarioResult; 
           return (
             <li key={id} className={clsx('flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm', r.delta >= 0 ? 'bg-accent-soft/50' : 'bg-down-soft/70', id === tree.outcomeId && 'ring-1 ring-accent')}>
               <span className="w-4 text-xs text-faint">{i + 1}</span>
-              <span className={clsx('font-mono text-xs', r.delta >= 0 ? 'text-up' : 'text-down')}>{r.delta >= 0 ? '↑' : '↓'}</span>
+              <span className={clsx('text-xs', r.delta >= 0 ? 'text-up' : 'text-down')}>{r.delta >= 0 ? '↑' : '↓'}</span>
               <span className="min-w-0 flex-1 truncate">{n.label}</span>
-              <span className="text-[10px] tracking-wide text-faint uppercase">{r.how === 'input' ? 'input' : r.how}</span>
-              <span className={clsx('w-20 text-right font-mono text-xs tabular', r.delta >= 0 ? 'text-up' : 'text-down')}>
+              <span className="text-[10px] text-faint">{r.how === 'input' ? 'input' : r.how}</span>
+              <span className={clsx('w-20 text-right text-xs tabular', r.delta >= 0 ? 'text-up' : 'text-down')}>
                 {r.delta >= 0 ? '+' : ''}
                 {formatValue(r.delta, fmt)}
               </span>
@@ -580,7 +572,7 @@ function Trace({ tree, model, result, fmtOf }: { tree: Tree; model: TreeModel; r
         return (
           <div key={id} className="text-xs">
             <div className="font-semibold">
-              {n.label} <span className="font-normal text-muted">· {m.type === 'change' ? 'change model' : 'level model'}, R² {m.r2.toFixed(2)}, {m.n} {tree.grain}s</span>
+              {n.label} <span className="font-normal text-muted">learned from {m.n} {tree.grain}s, explains {(m.r2 * 100).toFixed(0)}%</span>
             </div>
             <div className="mt-1 space-y-0.5 font-mono tabular">
               {step.parts

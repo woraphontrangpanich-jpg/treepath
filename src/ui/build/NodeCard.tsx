@@ -1,7 +1,7 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { clsx } from 'clsx'
-import { AlertCircle, Sigma, Target } from 'lucide-react'
-import { memo } from 'react'
+import { AlertCircle } from 'lucide-react'
+import { memo, type CSSProperties } from 'react'
 import { formatChange, formatValue } from '../../lib/format'
 import type { NodeResult } from '../../model/scenario'
 import type { NodeSeries, NodeSummary } from '../../tree/compute'
@@ -16,119 +16,122 @@ export type CardData = {
   isOutcome: boolean
   issue?: string
   source?: string
-  /** Present in Scenario mode. */
+  /** Present in Forecast mode. */
   scenario?: NodeResult
-  /** Scenario mode: card is off the changed path. */
+  /** Forecast mode: card is off the changed path. */
   dimmed?: boolean
+  /** Forecast mode: when the pulse reaches this card (ms), and a key that restarts it on each change. */
+  pulseDelay?: number
+  pulseKey?: string
 }
 
 export type CardNode = Node<CardData, 'card'>
 
 function CardImpl({ data, selected }: NodeProps<CardNode>) {
-  const { node, kind, series, summary, isOutcome, issue, source, scenario, dimmed } = data
+  const { node, kind, series, summary, isOutcome, issue, source, scenario, dimmed, pulseDelay, pulseKey } = data
   const change = formatChange(summary.change)
   const fmt = series?.format
-  const moved = scenario?.affected
+  const moved = !!scenario?.affected
   const up = (scenario?.delta ?? 0) > 0
-  // Stronger tint for bigger relative moves.
-  const strength = moved ? Math.min(30, 8 + Math.abs(scenario!.pct ?? 0.05) * 100 * 2) : 0
-  const tint = moved
-    ? {
-        background: `color-mix(in srgb, var(${up ? '--up' : '--down'}) ${strength}%, var(--surface))`,
-        borderColor: `color-mix(in srgb, var(${up ? '--up' : '--down'}) 60%, var(--line))`,
-      }
-    : undefined
+  const tone = up ? '--up' : '--down'
+  // Tint grows with the size of the move, so the eye goes to what changed most.
+  const strength = moved ? Math.min(34, 10 + Math.abs(scenario!.pct ?? 0.05) * 100 * 2.2) : 0
+
+  const style: CSSProperties = {}
+  if (moved && !isOutcome) {
+    style.background = `color-mix(in srgb, var(${tone}) ${strength}%, var(--surface))`
+    style.borderColor = `color-mix(in srgb, var(${tone}) 55%, var(--line))`
+  }
+  if (moved) {
+    ;(style as Record<string, string>)['--pulse'] = `var(${tone})`
+    style.animationDelay = `${pulseDelay ?? 0}ms`
+  }
+
+  const value = scenario ? scenario.value : summary.latest?.value
 
   return (
     <div
+      key={pulseKey}
       className={clsx(
-        'w-[236px] rounded-xl border bg-surface text-left shadow-sm transition-shadow',
-        kind === 'formula' && 'border-formula/40 bg-formula-soft/40',
-        kind === 'metric' && 'border-line',
-        isOutcome && 'ring-2 ring-accent ring-offset-2 ring-offset-bg',
-        selected && 'shadow-lg outline-2 outline-offset-2 outline-ink/60',
-        issue && !scenario && 'border-down/60',
-        dimmed && 'opacity-40',
+        'w-[236px] border text-left',
+        isOutcome
+          ? 'rounded-[18px] border-ink bg-ink text-bg shadow-[0_18px_40px_-22px_rgb(23_35_56/0.65)]'
+          : kind === 'formula'
+            ? 'rounded-md border-formula/35 border-t-[3px] border-t-formula bg-surface shadow-[0_1px_0_rgb(23_35_56/0.04)]'
+            : 'rounded-xl border-line bg-surface shadow-[0_1px_0_rgb(23_35_56/0.04)]',
+        selected && 'outline-2 outline-offset-[3px] outline-accent',
+        issue && !scenario && !isOutcome && 'border-down/60',
+        dimmed && 'opacity-35',
+        moved && 'node-arrive',
       )}
-      style={tint}
+      style={style}
     >
       <Handle type="target" position={Position.Bottom} />
-      <div className="px-3 pt-2.5 pb-3">
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
-          {isOutcome && (
-            <span className="inline-flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-accent-ink">
-              <Target className="size-3" />
-              Outcome
-            </span>
-          )}
+      <div className="px-3.5 pt-3 pb-3">
+        <div className="flex items-center gap-2">
           {kind === 'formula' && (
-            <span className="inline-flex items-center gap-1 text-formula">
-              <Sigma className="size-3" />
-              Formula
+            <span className="text-[13px] font-semibold text-formula italic" aria-label="Formula">
+              ƒ
             </span>
           )}
-          {kind === 'metric' && <span className="text-faint">Metric</span>}
+          <div className="min-w-0 flex-1 truncate text-[14px] leading-snug font-semibold" title={node.label}>
+            {node.label || <span className="opacity-50">Unnamed</span>}
+          </div>
+          {isOutcome && <span className="rounded-full bg-bg/15 px-2 py-0.5 text-[10.5px] font-medium">Outcome</span>}
           {issue && (
-            <span className="ml-auto text-down" title={issue} role="img" aria-label={`Problem: ${issue}`}>
+            <span className="text-down" title={issue} role="img" aria-label={`Problem: ${issue}`}>
               <AlertCircle className="size-3.5" />
             </span>
           )}
         </div>
-        <div className="mt-1 truncate text-[15px] leading-snug font-semibold" title={node.label}>
-          {node.label || <span className="text-faint">Unnamed</span>}
-        </div>
 
         {series?.error ? (
           <p className="mt-2 text-xs text-down">{series.error}</p>
-        ) : scenario ? (
-          <div className="mt-1">
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-xl font-medium tabular">{formatValue(scenario.value, fmt)}</span>
-              {moved && (
-                <span className={clsx('font-mono text-xs font-medium tabular', up ? 'text-up' : 'text-down')}>
-                  {formatChange(scenario.pct) ?? (up ? '+' : '')}
-                </span>
-              )}
-            </div>
-            <div className="text-[11px] text-muted tabular">
-              {moved ? (
-                <>
-                  baseline {formatValue(scenario.base, fmt)} · {scenario.delta > 0 ? '+' : ''}
-                  {formatValue(scenario.delta, fmt)}
-                </>
-              ) : (
-                'unchanged'
-              )}
-            </div>
-            {moved && scenario.how !== 'unchanged' && (
-              <div className="mt-1 text-[10px] font-semibold tracking-wider text-muted uppercase">
-                {scenario.how === 'input' ? 'your change' : scenario.how === 'model' ? 'model estimate' : 'formula'}
-              </div>
-            )}
-          </div>
         ) : (
           <>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="font-mono text-xl font-medium tabular">{formatValue(summary.latest?.value, fmt)}</span>
-              {change && (
-                <span className={clsx('font-mono text-xs tabular', (summary.change ?? 0) >= 0 ? 'text-up' : 'text-down')}>{change}</span>
-              )}
-              <span className="ml-auto text-[10px] text-faint tabular">{summary.latest?.date}</span>
+            <div className="mt-1.5 flex items-baseline gap-2">
+              <span className={clsx('font-display leading-none', isOutcome ? 'text-[28px]' : 'text-[21px]')}>{formatValue(value, fmt)}</span>
+              {scenario
+                ? moved && (
+                    <span
+                      className={clsx(
+                        'text-[12px] font-semibold tabular',
+                        isOutcome ? clsx('rounded-full px-2 py-0.5 text-white', up ? 'bg-up' : 'bg-down') : up ? 'text-up' : 'text-down',
+                      )}
+                    >
+                      {formatChange(scenario.pct) ?? ''}
+                    </span>
+                  )
+                : change && (
+                    <span className={clsx('text-[12px] tabular', isOutcome ? 'text-bg/70' : (summary.change ?? 0) >= 0 ? 'text-up' : 'text-down')}>
+                      {change}
+                    </span>
+                  )}
             </div>
-            <div className="mt-1.5">
-              <Sparkline points={series?.points.slice(-90) ?? []} width={210} height={26} />
-            </div>
+            {scenario ? (
+              <p className={clsx('mt-1.5 text-[11.5px] tabular', isOutcome ? 'text-bg/70' : 'text-muted')}>
+                {moved
+                  ? `was ${formatValue(scenario.base, fmt)}, ${scenario.how === 'input' ? 'your change' : scenario.how === 'model' ? 'learned effect' : 'by formula'}`
+                  : 'unchanged'}
+              </p>
+            ) : (
+              <div className={clsx('mt-2', isOutcome && 'opacity-90')}>
+                <Sparkline points={series?.points.slice(-90) ?? []} width={206} height={24} className={isOutcome ? 'stroke-bg/80' : 'stroke-accent'} />
+              </div>
+            )}
           </>
         )}
 
-        {kind === 'formula' && (
-          <p className="mt-2 line-clamp-2 font-mono text-[10.5px] leading-4 text-muted" title={node.formula}>
+        {kind === 'formula' && !scenario && (
+          <p className={clsx('mt-2 line-clamp-2 font-mono text-[10.5px] leading-4', isOutcome ? 'text-bg/60' : 'text-muted')} title={node.formula}>
             = {node.formula || '…'}
           </p>
         )}
-        {source && <p className="mt-1.5 truncate text-[10.5px] text-faint">{source}</p>}
-        {summary.gap !== null && Math.abs(summary.gap) > 1e-9 && (
-          <p className="mt-0.5 text-[10.5px] text-faint tabular">gap vs actual {formatValue(summary.gap, fmt)}</p>
+        {source && !scenario && <p className="mt-1.5 truncate text-[11px] text-faint">{source}</p>}
+        {!scenario && summary.gap !== null && Math.abs(summary.gap) > 1e-9 && (
+          <p className={clsx('mt-0.5 text-[11px] tabular', isOutcome ? 'text-bg/60' : 'text-faint')}>
+            {formatValue(Math.abs(summary.gap), fmt)} {summary.gap > 0 ? 'above' : 'below'} reported
+          </p>
         )}
       </div>
       <Handle type="source" position={Position.Top} />

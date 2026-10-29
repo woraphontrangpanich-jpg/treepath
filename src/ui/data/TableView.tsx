@@ -55,14 +55,19 @@ export function TableView({ table }: { table: Table }) {
             aria-label="Table name"
             name="table-name"
             autoComplete="off"
-            className="w-full rounded-md bg-transparent text-2xl font-semibold tracking-tight outline-none hover:bg-surface focus:bg-surface"
+            className="font-display w-full rounded-md bg-transparent text-[26px] outline-none hover:bg-surface focus:bg-surface"
           />
-          <p className="mt-1 text-sm text-muted">
-            {table.fileName}
-            {!/\.(csv|tsv)$/i.test(table.fileName) && <> › {table.sheetName}</>} · {plural(table.rows.length, 'row')} ·{' '}
-            {plural(table.columns.length, 'column')}
+          <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+            <span>
+              {table.fileName}
+              {!/\.(csv|tsv)$/i.test(table.fileName) && <> › {table.sheetName}</>}
+            </span>
+            <span className="tabular">{plural(table.rows.length, 'row')}</span>
+            <span className="tabular">{plural(table.columns.length, 'column')}</span>
             {dateCol && dateCol.profile.min !== null && (
-              <> · {String(dateCol.profile.min)} → {String(dateCol.profile.max)}</>
+              <span className="tabular">
+                {String(dateCol.profile.min)} to {String(dateCol.profile.max)}
+              </span>
             )}
           </p>
         </div>
@@ -155,8 +160,8 @@ function ColumnRow({
             <div className="truncate font-medium">{c.name}</div>
             <div className="text-xs text-faint">
               {c.type}
-              {c.format === 'percent' && ' · %'}
-              {p.nulls > 0 && ` · ${p.nulls.toLocaleString()} blank`}
+              {c.format === 'percent' && ', percent'}
+              {p.nulls > 0 && `, ${p.nulls.toLocaleString()} blank`}
             </div>
           </div>
         </div>
@@ -227,7 +232,7 @@ function DataPreview({ table }: { table: Table }) {
         Preview
       </SectionTitle>
       <div className="max-h-[480px] overflow-auto rounded-xl border border-line bg-surface">
-        <table className="w-full font-mono text-xs tabular">
+        <table className="w-full text-xs tabular">
           <thead className="sticky top-0 bg-surface-2">
             <tr>
               <th className="border-b border-line px-3 py-2 text-right font-normal text-faint">#</th>

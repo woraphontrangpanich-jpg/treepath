@@ -80,11 +80,11 @@ export function ModelSummary({ fit, grain }: { fit: DriverFit; grain: Grain }) {
       <dl className="grid grid-cols-2 gap-2 text-xs">
         <div className="rounded-lg bg-surface-2 px-2.5 py-1.5">
           <dt className="text-faint">Explains (R²)</dt>
-          <dd className="font-mono text-sm tabular">{(fit.r2 * 100).toFixed(0)}%</dd>
+          <dd className="text-sm tabular">{(fit.r2 * 100).toFixed(0)}%</dd>
         </div>
         <div className="rounded-lg bg-surface-2 px-2.5 py-1.5" title="Share of held-out periods where the model got the direction of change right">
           <dt className="text-faint">Direction Right</dt>
-          <dd className="font-mono text-sm tabular">{wf ? `${(wf.directionHit * 100).toFixed(0)}%` : '—'}</dd>
+          <dd className="text-sm tabular">{wf ? `${(wf.directionHit * 100).toFixed(0)}%` : '—'}</dd>
         </div>
       </dl>
       <p className="text-[11px] leading-4 text-faint">

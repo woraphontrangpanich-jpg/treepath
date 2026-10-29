@@ -13,9 +13,9 @@ export function Button({
     <button
       type="button"
       className={clsx(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',
+        'press inline-flex items-center justify-center gap-1.5 rounded-lg font-medium disabled:pointer-events-none disabled:opacity-50',
         size === 'sm' ? 'h-7 px-2.5 text-xs' : 'h-9 px-3.5 text-sm',
-        variant === 'primary' && 'bg-accent text-accent-ink hover:brightness-110',
+        variant === 'primary' && 'bg-accent text-accent-ink shadow-[0_1px_0_rgb(0_0_0/0.08),inset_0_1px_0_rgb(255_255_255/0.18)] hover:brightness-110',
         variant === 'secondary' && 'border border-line bg-surface text-ink hover:bg-surface-2',
         variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-ink',
         variant === 'danger' && 'text-down hover:bg-down-soft',
@@ -97,7 +97,7 @@ export function Segmented<T extends string>({
 export function SectionTitle({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   return (
     <div className="mb-3 flex items-end justify-between gap-4">
-      <h2 className="text-[13px] font-semibold tracking-wide text-muted uppercase">{children}</h2>
+      <h2 className="text-[13px] font-semibold text-ink">{children}</h2>
       {aside}
     </div>
   )

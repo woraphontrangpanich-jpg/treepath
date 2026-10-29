@@ -4,7 +4,12 @@ import { memo } from 'react'
 import { ROLES } from '../../tree/roles'
 import type { TreeEdge } from '../../tree/types'
 
-export type RoleEdgeData = { edge: TreeEdge; dimmed?: boolean }
+export type RoleEdgeData = {
+  edge: TreeEdge
+  dimmed?: boolean
+  /** Forecast mode: this link carries the change; tone, start delay (ms) and a key that restarts the pulse. */
+  flow?: { tone: 'up' | 'down'; delay: number; key: string }
+}
 export type RoleFlowEdge = Edge<RoleEdgeData, 'role'>
 
 function RoleEdgeImpl({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, selected }: EdgeProps<RoleFlowEdge>) {
@@ -13,7 +18,7 @@ function RoleEdgeImpl({ id, sourceX, sourceY, targetX, targetY, sourcePosition, 
   const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, curvature: 0.35 })
   const label =
     e.role === 'driver'
-      ? `model${e.lag ? ` · lag ${e.lag}` : ''}${e.expectedSign === 'negative' ? ' · −' : e.expectedSign === 'positive' ? ' · +' : ''}`
+      ? `learned${e.lag ? `, lag ${e.lag}` : ''}`
       : e.role === 'formula' || e.role === 'cost'
         ? null
         : meta.short
@@ -25,22 +30,32 @@ function RoleEdgeImpl({ id, sourceX, sourceY, targetX, targetY, sourcePosition, 
         path={path}
         interactionWidth={16}
         style={{
-          stroke: meta.color,
-          strokeWidth: selected ? 3 : 1.75,
-          strokeDasharray: meta.dash,
-          opacity: data?.dimmed ? 0.25 : 1,
+          stroke: data?.flow ? `var(--${data.flow.tone})` : meta.color,
+          strokeWidth: selected ? 3 : data?.flow ? 2.25 : 1.75,
+          strokeDasharray: data?.flow ? undefined : meta.dash,
+          opacity: data?.dimmed ? 0.18 : 1,
         }}
       />
+      {data?.flow && (
+        <path
+          key={data.flow.key}
+          d={path}
+          fill="none"
+          className="edge-flow"
+          strokeLinecap="round"
+          style={{ stroke: 'var(--surface)', strokeWidth: 2.25, opacity: 0.85, animationDelay: `${data.flow.delay}ms` }}
+        />
+      )}
       {/* Arrowhead pointing into the bottom of the target card. */}
       <path
         d={`M ${targetX - 4.5} ${targetY + 8} L ${targetX} ${targetY + 1} L ${targetX + 4.5} ${targetY + 8} Z`}
-        style={{ fill: meta.color, opacity: data?.dimmed ? 0.25 : 1 }}
+        style={{ fill: data?.flow ? `var(--${data.flow.tone})` : meta.color, opacity: data?.dimmed ? 0.18 : 1 }}
       />
-      {label && (
+      {label && !data?.flow && !data?.dimmed && (
         <EdgeLabelRenderer>
           <div
             className={clsx(
-              'nodrag nopan pointer-events-auto absolute rounded-md border bg-surface px-1.5 py-px font-mono text-[10px] leading-4',
+              'nodrag nopan pointer-events-auto absolute rounded-full border bg-surface px-2 py-px text-[10.5px] leading-4 font-medium',
               selected ? 'border-ink/50' : 'border-line',
             )}
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, color: meta.color }}

@@ -97,7 +97,7 @@ export function sheetToTable(ws: XLSX.WorkSheet, fileName: string, sheetName: st
     id: makeId(),
     fileName,
     sheetName,
-    name: multiSheet ? `${baseName} · ${sheetName}` : baseName,
+    name: multiSheet ? `${baseName} › ${sheetName}` : baseName,
     columns,
     rows,
     importedAt: new Date().toISOString(),

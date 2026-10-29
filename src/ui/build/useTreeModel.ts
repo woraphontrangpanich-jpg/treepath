@@ -30,7 +30,7 @@ export function useTreeModel(tree: Tree): TreeModel {
       if (!n?.metric) return undefined
       const t = resolveTable(tables, n.metric)
       const filters = n.metric.filters?.filter((f) => f.values.length).length
-      return `${t?.name ?? n.metric.fileName} · ${n.metric.column} · ${n.metric.aggregation}${filters ? ` · ${filters} filter${filters > 1 ? 's' : ''}` : ''}`
+      return `${t?.name ?? n.metric.fileName} › ${n.metric.column}${filters ? `, ${filters} filter${filters > 1 ? 's' : ''}` : ''}`
     }
     return { series, summaries, issues, models, sourceLabel }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- calcKey captures every input that affects the maths

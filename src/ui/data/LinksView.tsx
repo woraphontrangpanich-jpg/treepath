@@ -22,11 +22,11 @@ function LinkEnds({ tables, from, to }: { tables: Table[]; from: ColumnRef; to: 
   return (
     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm">
       <span className="truncate">
-        <span className="text-muted">{a.table}</span> · <span className="font-medium">{a.column}</span>
+        <span className="text-muted">{a.table} ›</span> <span className="font-medium">{a.column}</span>
       </span>
       <ArrowRight className="size-4 shrink-0 text-faint" />
       <span className="truncate">
-        <span className="text-muted">{b.table}</span> · <span className="font-medium">{b.column}</span>
+        <span className="text-muted">{b.table} ›</span> <span className="font-medium">{b.column}</span>
       </span>
     </div>
   )
@@ -174,7 +174,7 @@ function NewLinkForm({ tables, onAdd }: { tables: Table[]; onAdd: (l: Omit<Link,
         <div className="mt-4 flex items-center justify-end gap-3">
           {stats && (
             <span className="text-xs text-muted">
-              {stats.matched} of {stats.fromDistinct} values match · {stats.cardinality}
+              {stats.matched} of {stats.fromDistinct} values match
             </span>
           )}
           {stats && <MatchBadge stats={stats} />}

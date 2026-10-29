@@ -81,7 +81,7 @@ export function Library({ tree }: { tree: Tree }) {
       </div>
 
       <div className="border-t border-line px-3 pt-3">
-        <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Metrics</div>
+        <div className="mb-2 text-[13px] font-semibold text-ink">Metrics</div>
         <label className="flex h-8 items-center gap-2 rounded-lg border border-line bg-surface-2 px-2 text-sm focus-within:border-accent">
           <Search className="size-3.5 text-faint" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search metrics…" name="metric-search" autoComplete="off" aria-label="Search metrics" className="min-w-0 flex-1 bg-transparent outline-none" />

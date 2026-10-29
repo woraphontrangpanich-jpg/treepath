@@ -18,6 +18,7 @@ interface Notice {
   kind: 'info' | 'error'
   text: string
   action?: { label: string; run: () => void }
+  leaving?: boolean
 }
 
 interface State {
@@ -46,6 +47,11 @@ interface State {
 }
 
 const STORAGE_KEY = 'treepath:data:v1'
+
+/** IndexedDB can stall (e.g. a pending delete in another tab); never let that block the app from starting. */
+export function withTimeout<T>(p: Promise<T>, ms = 2000): Promise<T | undefined> {
+  return Promise.race([p, new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), ms))])
+}
 let noticeId = 1
 
 export const useStore = create<State>((setState, getState) => ({
@@ -114,7 +120,11 @@ export const useStore = create<State>((setState, getState) => ({
     setState((s) => ({ notices: [...s.notices, { id, kind, text, action }] }))
     if (kind === 'info') setTimeout(() => getState().dismiss(id), action ? 8000 : 4000)
   },
-  dismiss: (id) => setState((s) => ({ notices: s.notices.filter((n) => n.id !== id) })),
+  dismiss: (id) => {
+    // Play the exit (slide back down) before removing it.
+    setState((s) => ({ notices: s.notices.map((n) => (n.id === id ? { ...n, leaving: true } : n)) }))
+    setTimeout(() => setState((s) => ({ notices: s.notices.filter((n) => n.id !== id) })), 260)
+  },
 }))
 
 interface Persisted {
@@ -126,10 +136,13 @@ interface Persisted {
 /** Load saved data from IndexedDB, then keep saving changes (debounced). Data stays in this browser. */
 export async function hydrate() {
   try {
-    const saved = await get<Persisted>(STORAGE_KEY)
+    const saved = await withTimeout(get<Persisted>(STORAGE_KEY))
     // Older saves had separate "dimension" columns; they're now part of "Category / ID".
     if (saved?.tables)
-      for (const t of saved.tables) t.columns = t.columns.map((c) => (c.role === 'dimension' ? { ...c, role: 'key' } : c))
+      for (const t of saved.tables) {
+        t.columns = t.columns.map((c) => (c.role === 'dimension' ? { ...c, role: 'key' } : c))
+        t.name = t.name.replace(' · ', ' › ')
+      }
     if (saved?.tables) useStore.setState({ tables: saved.tables, links: saved.links ?? [], selectedTableId: saved.selectedTableId ?? saved.tables[0]?.id ?? null })
   } catch (err) {
     console.warn('Treepath: could not read saved data', err)
