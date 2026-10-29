@@ -1,7 +1,12 @@
-import ELK from 'elkjs/lib/elk.bundled.js'
+import type { ELK } from 'elkjs/lib/elk-api'
 import type { TreeEdge, TreeNode } from './types'
 
-const elk = new ELK()
+// ELK is large (~1.4 MB); load it the first time a layout is requested.
+let elkPromise: Promise<ELK> | null = null
+function getElk() {
+  elkPromise ??= import('elkjs/lib/elk.bundled.js').then((m) => new m.default())
+  return elkPromise
+}
 
 export const DEFAULT_SIZE = { width: 236, height: 120 }
 
@@ -28,6 +33,7 @@ export async function layoutTree(
   sizes: Map<string, { width: number; height: number }>,
 ): Promise<Map<string, { x: number; y: number }>> {
   const ids = new Set(nodes.map((n) => n.id))
+  const elk = await getElk()
   const graph = await elk.layout({
     id: 'root',
     layoutOptions: {
