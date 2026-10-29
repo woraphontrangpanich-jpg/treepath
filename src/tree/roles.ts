@@ -40,31 +40,13 @@ export const ROLES: Record<EdgeRole, RoleMeta> = {
   influence: {
     label: 'Influence',
     short: 'influence',
-    description: 'Believed to affect the target, but not quantified.',
+    description: 'Context only: you believe it matters, but it doesn’t calculate.',
     color: 'var(--e-influence)',
     dash: '6 4',
     numeric: false,
     derived: false,
   },
-  leading: {
-    label: 'Leading indicator',
-    short: 'leads',
-    description: 'Moves before the target; context for timing, not calculated.',
-    color: 'var(--e-leading)',
-    dash: '10 4 2 4',
-    numeric: false,
-    derived: false,
-  },
-  correlation: {
-    label: 'Correlation',
-    short: 'corr',
-    description: 'Moves together, direction unknown. Never calculated.',
-    color: 'var(--e-correlation)',
-    dash: '2 4',
-    numeric: false,
-    derived: false,
-  },
 }
 
-export const ROLE_ORDER: EdgeRole[] = ['formula', 'cost', 'driver', 'influence', 'leading', 'correlation']
-export const MANUAL_ROLES: EdgeRole[] = ['driver', 'influence', 'leading', 'correlation']
+export const ROLE_ORDER: EdgeRole[] = ['formula', 'cost', 'driver', 'influence']
+export const MANUAL_ROLES: EdgeRole[] = ['driver', 'influence']

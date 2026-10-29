@@ -86,6 +86,8 @@ body,
 
 body {
   margin: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
@@ -155,4 +157,15 @@ body {
 .react-flow__connectionline path {
   stroke: var(--accent);
   stroke-width: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

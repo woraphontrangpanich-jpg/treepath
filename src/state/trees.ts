@@ -2,7 +2,8 @@ import { get, set } from 'idb-keyval'
 import { create } from 'zustand'
 import type { Grain } from '../data/types'
 import { renameRef } from '../tree/formula'
-import { newId, syncFormulaEdges } from '../tree/graph'
+import { newId, normalizeTree, syncFormulaEdges } from '../tree/graph'
+import { useStore } from './store'
 import { emptyTree } from '../tree/sample'
 import { TREE_FILE_VERSION, type Assumption, type Scenario, type Tree, type TreeEdge, type TreeFile, type TreeNode } from '../tree/types'
 
@@ -33,6 +34,7 @@ interface TreeState {
   select: (s: Selection) => void
   toggleLegend: () => void
   importTree: (file: TreeFile) => void
+  restoreTree: (tree: Tree) => void
 
   /** Make sure the active tree has a scenario selected; returns it. */
   ensureScenario: () => void
@@ -123,6 +125,8 @@ export const useTrees = create<TreeState>((setState, getState) => {
       mutate((t) => ({ ...t, nodes: t.nodes.map((n) => (positions.has(n.id) ? { ...n, position: positions.get(n.id)! } : n)) })),
     removeNodes: (ids) => {
       const gone = new Set(ids)
+      const before = activeTree(getState())
+      const labels = before?.nodes.filter((n) => gone.has(n.id)).map((n) => n.label) ?? []
       mutate(
         (t) => ({
           ...t,
@@ -133,6 +137,11 @@ export const useTrees = create<TreeState>((setState, getState) => {
         true,
       )
       setState((s) => (s.selection && gone.has(s.selection.id) ? { selection: null } : {}))
+      if (before && labels.length)
+        useStore.getState().notify('info', `Deleted ${labels.length === 1 ? `“${labels[0]}”` : `${labels.length} cards`}.`, {
+          label: 'Undo',
+          run: () => getState().restoreTree(before),
+        })
     },
 
     addEdge: (edge) => {
@@ -146,9 +155,12 @@ export const useTrees = create<TreeState>((setState, getState) => {
     updateEdge: (id, patch) => mutate((t) => ({ ...t, edges: t.edges.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
     removeEdges: (ids) => {
       const gone = new Set(ids)
+      const before = activeTree(getState())
       mutate((t) => ({ ...t, edges: t.edges.filter((e) => !gone.has(e.id)) }))
       setState((s) => (s.selection && gone.has(s.selection.id) ? { selection: null } : {}))
+      if (before) useStore.getState().notify('info', 'Link deleted.', { label: 'Undo', run: () => getState().restoreTree(before) })
     },
+    restoreTree: (tree) => setState((s) => ({ trees: s.trees.map((t) => (t.id === tree.id ? tree : t)), selection: null })),
     setOutcome: (outcomeId) => mutate((t) => ({ ...t, outcomeId })),
     select: (selection) => setState({ selection }),
     toggleLegend: () => setState((s) => ({ showLegend: !s.showLegend })),
@@ -201,7 +213,7 @@ export const useTrees = create<TreeState>((setState, getState) => {
     importTree: (file) => {
       const now = new Date().toISOString()
       const t = file.tree
-      getState().newTree({ ...t, id: newId('tree'), name: t.name || 'Imported tree', createdAt: t.createdAt ?? now, updatedAt: now })
+      getState().newTree(normalizeTree({ ...t, id: newId('tree'), name: t.name || 'Imported tree', createdAt: t.createdAt ?? now, updatedAt: now }))
     },
   }
 })
@@ -225,7 +237,7 @@ const KEY = 'treepath:trees:v1'
 export async function hydrateTrees() {
   try {
     const saved = await get<{ trees: Tree[]; activeId: string | null }>(KEY)
-    if (saved?.trees) useTrees.setState({ trees: saved.trees, activeId: saved.activeId ?? saved.trees[0]?.id ?? null })
+    if (saved?.trees) useTrees.setState({ trees: saved.trees.map(normalizeTree), activeId: saved.activeId ?? saved.trees[0]?.id ?? null })
   } catch (err) {
     console.warn('Treepath: could not read saved trees', err)
   }

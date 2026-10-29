@@ -1,4 +1,4 @@
-import { Database, FlaskConical, GitBranch, LineChart, Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { useState } from 'react'
 import { useStore, type Workspace } from '../state/store'
 import { Segmented } from './primitives'
@@ -17,7 +17,9 @@ export function Logo() {
           <circle cx="22" cy="23" r="2.6" />
         </g>
       </svg>
-      <span className="text-[17px] font-semibold tracking-tight">treepath</span>
+      <span className="text-[17px] font-semibold tracking-tight" translate="no">
+        treepath
+      </span>
     </div>
   )
 }
@@ -27,6 +29,7 @@ function ThemeToggle() {
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b1210' : '#f4f6f4')
     try {
       localStorage.setItem('treepath:theme', next)
     } catch {
@@ -46,16 +49,24 @@ function ThemeToggle() {
   )
 }
 
+function Step({ n, label }: { n: number; label: string }) {
+  return (
+    <>
+      <span className="grid size-4 place-items-center rounded-full bg-line text-[10px] font-semibold text-muted">{n}</span>
+      {label}
+    </>
+  )
+}
+
 export function TopBar() {
   const workspace = useStore((s) => s.workspace)
   const setWorkspace = useStore((s) => s.setWorkspace)
   const hasData = useStore((s) => s.tables.length > 0)
 
   const options: { value: Workspace; label: React.ReactNode; disabled?: boolean; title?: string }[] = [
-    { value: 'data', label: <><Database className="size-3.5" />Data</> },
-    { value: 'build', label: <><GitBranch className="size-3.5" />Build</>, disabled: !hasData, title: hasData ? undefined : 'Import data first' },
-    { value: 'analyze', label: <><LineChart className="size-3.5" />Analyze</>, disabled: !hasData },
-    { value: 'scenario', label: <><FlaskConical className="size-3.5" />Scenario</>, disabled: !hasData },
+    { value: 'data', label: <Step n={1} label="Data" /> },
+    { value: 'build', label: <Step n={2} label="Build" />, disabled: !hasData, title: hasData ? undefined : 'Import data first' },
+    { value: 'scenario', label: <Step n={3} label="Forecast" />, disabled: !hasData, title: hasData ? undefined : 'Import data first' },
   ]
 
   return (

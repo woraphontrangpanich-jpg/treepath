@@ -35,7 +35,7 @@ describe('detect', () => {
     expect(inferColumn('Orders', [1, 2, 3]).column).toMatchObject({ role: 'metric', aggregation: 'sum' })
     expect(inferColumn('Gross Price', [12, 13]).column.aggregation).toBe('avg')
     expect(inferColumn('day', ['2025-01-01', '2025-01-02']).column.role).toBe('date')
-    expect(inferColumn('country', ['TH', 'TH']).column.role).toBe('dimension')
+    expect(inferColumn('country', ['TH', 'TH']).column.role).toBe('key')
   })
 
   it('resolves dd/mm vs mm/dd from the values in a column', () => {

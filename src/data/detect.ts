@@ -128,7 +128,7 @@ export function inferColumn(
   else if (type === 'empty') role = 'ignore'
   else if (KEY_NAME_RE.test(name.trim())) role = 'key'
   else if (type === 'number') role = 'metric'
-  else role = 'dimension'
+  else role = 'key'
 
   const aggregation: Aggregation = role === 'metric' && (AVG_NAME_RE.test(name) || percentHint || percentStrings > 0) ? 'avg' : 'sum'
   const format = percentHint || percentStrings > 0 ? 'percent' : undefined

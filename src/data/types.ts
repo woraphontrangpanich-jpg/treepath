@@ -35,7 +35,7 @@ export interface Column {
   role: ColumnRole
   aggregation: Aggregation
   /** Display format hint, e.g. "percent" when the source cells were formatted as %. */
-  format?: 'percent' | 'currency' | 'integer'
+  format?: 'percent'
   profile: ColumnProfile
 }
 

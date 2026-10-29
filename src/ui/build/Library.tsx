@@ -1,5 +1,5 @@
 import { useReactFlow } from '@xyflow/react'
-import { Check, GripVertical, Search, Sigma, StickyNote } from 'lucide-react'
+import { Check, GripVertical, Plus, Search, Sigma } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useStore } from '../../state/store'
 import type { Tree } from '../../tree/types'
@@ -19,12 +19,12 @@ function DraggableItem({
   return (
     <div
       draggable
-      title={title ?? 'Drag onto the canvas, or double-click to add'}
+      title={title ?? 'Click to add, or drag onto the canvas'}
       onDragStart={(e) => {
         e.dataTransfer.setData(DND_MIME, JSON.stringify(payload))
         e.dataTransfer.effectAllowed = 'copy'
       }}
-      onDoubleClick={onAdd}
+      onClick={onAdd}
       onKeyDown={(e) => {
         if (e.key === 'Enter') onAdd()
       }}
@@ -71,32 +71,24 @@ export function Library({ tree }: { tree: Tree }) {
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
       <div className="space-y-2 p-3">
-        <div className="text-[11px] font-semibold tracking-wider text-muted uppercase">Add cards</div>
-        <div className="grid grid-cols-2 gap-2">
-          <DraggableItem payload={{ kind: 'formula' }} onAdd={() => addAtCenter({ kind: 'formula' })}>
-            <span className="-ml-4 flex items-center gap-1.5 font-medium text-formula">
-              <Sigma className="size-4" />
-              Formula
-            </span>
-          </DraggableItem>
-          <DraggableItem payload={{ kind: 'note' }} onAdd={() => addAtCenter({ kind: 'note' })}>
-            <span className="-ml-4 flex items-center gap-1.5 font-medium text-muted">
-              <StickyNote className="size-4" />
-              Note
-            </span>
-          </DraggableItem>
-        </div>
+        <DraggableItem payload={{ kind: 'formula' }} onAdd={() => addAtCenter({ kind: 'formula' })} title="Add a card calculated from other cards">
+          <span className="-ml-4 flex flex-1 items-center gap-1.5 rounded-lg border border-formula/40 bg-formula-soft/50 px-2.5 py-1.5 font-medium text-formula">
+            <Sigma className="size-4" />
+            New Formula Card
+            <Plus className="ml-auto size-3.5" />
+          </span>
+        </DraggableItem>
       </div>
 
       <div className="border-t border-line px-3 pt-3">
-        <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Metric library</div>
+        <div className="mb-2 text-[11px] font-semibold tracking-wider text-muted uppercase">Metrics</div>
         <label className="flex h-8 items-center gap-2 rounded-lg border border-line bg-surface-2 px-2 text-sm focus-within:border-accent">
           <Search className="size-3.5 text-faint" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search metrics" className="min-w-0 flex-1 bg-transparent outline-none" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search metrics…" name="metric-search" autoComplete="off" aria-label="Search metrics" className="min-w-0 flex-1 bg-transparent outline-none" />
         </label>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1.5 py-2">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-1.5 py-2">
         {groups.map(({ table, metrics }) => (
           <div key={table.id} className="mb-2">
             <div className="truncate px-2 py-1 text-xs text-faint">{table.name}</div>
@@ -114,7 +106,7 @@ export function Library({ tree }: { tree: Tree }) {
         ))}
         {groups.length === 0 && <p className="px-3 py-6 text-center text-sm text-muted">No metrics match.</p>}
       </div>
-      <p className="border-t border-line px-3 py-2 text-[11px] leading-4 text-faint">Drag onto the canvas or double-click. Columns marked as Metric in Data appear here.</p>
+      <p className="border-t border-line px-3 py-2 text-[11px] leading-4 text-faint">Click to add, or drag onto the canvas. Columns set to Metric in Data appear here.</p>
     </aside>
   )
 }

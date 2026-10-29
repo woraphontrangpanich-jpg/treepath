@@ -17,31 +17,32 @@ const TYPE_ICON: Record<ColumnType, typeof Hash> = {
 }
 
 const ROLE_LABEL: Record<ColumnRole, string> = {
-  date: 'Date (time axis)',
-  key: 'Key (for linking)',
+  date: 'Date',
+  key: 'Category / ID',
   metric: 'Metric',
-  dimension: 'Dimension (filter)',
+  dimension: 'Category / ID',
   ignore: 'Ignore',
 }
 
 const AGG_LABEL: Record<Aggregation, string> = {
   sum: 'Sum',
   avg: 'Average',
+  count: 'Count rows',
   min: 'Min',
   max: 'Max',
   last: 'Last value',
-  count: 'Count rows',
 }
+const AGGS: Aggregation[] = ['sum', 'avg', 'count']
 
 function rolesFor(type: ColumnType): ColumnRole[] {
-  if (type === 'date') return ['date', 'dimension', 'ignore']
-  if (type === 'number') return ['metric', 'key', 'dimension', 'ignore']
-  return ['key', 'dimension', 'ignore']
+  if (type === 'date') return ['date', 'ignore']
+  if (type === 'number') return ['metric', 'key', 'ignore']
+  return ['key', 'ignore']
 }
 
 export function TableView({ table }: { table: Table }) {
   const { renameTable, removeTable } = useStore.getState()
-  const health = useMemo(() => tableHealth(table), [table])
+  const health = useMemo(() => tableHealth(table).filter((h) => h.level !== 'ok'), [table])
   const dateCol = table.columns.find((c) => c.role === 'date')
 
   return (
@@ -52,6 +53,8 @@ export function TableView({ table }: { table: Table }) {
             value={table.name}
             onChange={(e) => renameTable(table.id, e.target.value)}
             aria-label="Table name"
+            name="table-name"
+            autoComplete="off"
             className="w-full rounded-md bg-transparent text-2xl font-semibold tracking-tight outline-none hover:bg-surface focus:bg-surface"
           />
           <p className="mt-1 text-sm text-muted">
@@ -63,7 +66,7 @@ export function TableView({ table }: { table: Table }) {
             )}
           </p>
         </div>
-        <Button variant="danger" onClick={() => removeTable(table.id)}>
+        <Button variant="danger" onClick={() => confirm(`Remove “${table.name}” and its links?`) && removeTable(table.id)}>
           <Trash2 className="size-4" />
           Remove
         </Button>
@@ -96,7 +99,7 @@ function ColumnMapping({ table }: { table: Table }) {
   const updateColumn = useStore((s) => s.updateColumn)
   return (
     <section>
-      <SectionTitle aside={<span className="text-xs text-faint">Detected automatically — adjust if something looks wrong</span>}>
+      <SectionTitle aside={<span className="text-xs text-faint">Detected automatically. Change anything that looks wrong.</span>}>
         Columns
       </SectionTitle>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
@@ -104,7 +107,7 @@ function ColumnMapping({ table }: { table: Table }) {
           <thead>
             <tr className="border-b border-line text-left text-xs text-muted">
               <th className="px-4 py-2.5 font-medium">Column</th>
-              <th className="px-3 py-2.5 font-medium">Role</th>
+              <th className="px-3 py-2.5 font-medium">Use as</th>
               <th className="px-3 py-2.5 font-medium">Combine rows by</th>
               <th className="px-3 py-2.5 font-medium">Values</th>
               <th className="px-3 py-2.5 font-medium">Monthly trend</th>
@@ -170,7 +173,7 @@ function ColumnRow({
       <td className="px-3 py-2.5">
         {c.role === 'metric' ? (
           <Select value={c.aggregation} onChange={(e) => onChange({ aggregation: e.target.value as Aggregation })} aria-label={`Aggregation of ${c.name}`}>
-            {(Object.keys(AGG_LABEL) as Aggregation[]).map((a) => (
+            {[...new Set([...AGGS, c.aggregation])].map((a) => (
               <option key={a} value={a}>
                 {AGG_LABEL[a]}
               </option>

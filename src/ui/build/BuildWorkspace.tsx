@@ -82,22 +82,22 @@ function TreeMenu({ tree }: { tree: Tree }) {
           <div className="my-1 border-t border-line" />
           <button type="button" onClick={act(() => newTree())} className={item}>
             <FilePlus2 className="size-4 text-faint" />
-            New blank tree
+            New Blank Tree
           </button>
           {hasSampleTables(tables) && (
             <button type="button" onClick={act(() => void withAutoLayout(buildSampleTree(tables)!).then(newTree))} className={item}>
               <Sparkles className="size-4 text-faint" />
-              New from sample
+              New From Sample
             </button>
           )}
           <button type="button" onClick={act(() => duplicateTree(tree.id))} className={item}>
             <Copy className="size-4 text-faint" />
-            Duplicate this tree
+            Duplicate Tree
           </button>
           <div className="my-1 border-t border-line" />
           <button type="button" onClick={act(() => file.current?.click())} className={item}>
             <Upload className="size-4 text-faint" />
-            Import .treepath.json
+            Import Tree File…
           </button>
           <button
             type="button"
@@ -105,7 +105,7 @@ function TreeMenu({ tree }: { tree: Tree }) {
             className={item}
           >
             <Download className="size-4 text-faint" />
-            Export this tree
+            Export Tree File
           </button>
           <div className="my-1 border-t border-line" />
           <button
@@ -116,7 +116,7 @@ function TreeMenu({ tree }: { tree: Tree }) {
             className={clsx(item, 'text-down hover:bg-down-soft')}
           >
             <Trash2 className="size-4" />
-            Delete this tree
+            Delete Tree
           </button>
         </div>
       )}
@@ -148,6 +148,8 @@ function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
         value={tree.name}
         onChange={(e) => renameTree(e.target.value)}
         aria-label="Tree name"
+        name="tree-name"
+        autoComplete="off"
         className="min-w-32 flex-1 rounded-md bg-transparent px-1.5 py-1 text-[15px] font-semibold outline-none hover:bg-surface-2 focus:bg-surface-2"
       />
       {errorCount > 0 && <Badge tone="down">{errorCount} error{errorCount > 1 ? 's' : ''}</Badge>}
@@ -163,12 +165,12 @@ function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
       />
       <Button size="sm" onClick={() => void autoLayout()} disabled={busy || tree.nodes.length === 0} title="Arrange cards: inputs below, outcome on top">
         <LayoutDashboard className="size-3.5" />
-        <span className="hidden xl:inline">Auto-layout</span>
+        <span className="hidden xl:inline">Tidy Up</span>
       </Button>
-      <Button size="sm" variant="ghost" onClick={() => fitView({ padding: 0.15, duration: 300 })} title="Fit to screen">
+      <Button size="sm" variant="ghost" onClick={() => fitView({ padding: 0.15, duration: 300 })} title="Fit to screen" aria-label="Fit to screen">
         <Maximize className="size-3.5" />
       </Button>
-      <Button size="sm" variant={showLegend ? 'secondary' : 'ghost'} onClick={toggleLegend} title="Show or hide the link legend">
+      <Button size="sm" variant={showLegend ? 'secondary' : 'ghost'} onClick={toggleLegend} title="Show or hide the link legend" aria-label="Toggle legend" aria-pressed={showLegend}>
         <Info className="size-3.5" />
       </Button>
     </div>
@@ -199,8 +201,8 @@ function StartTree() {
   return (
     <div className="grid flex-1 place-items-center p-8">
       <div className="w-full max-w-2xl text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Start a tree</h1>
-        <p className="mt-2 text-sm text-muted">A tree shows how your inputs add up to one outcome. Formulas give the exact maths; model drivers are learned from history.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">Start a Tree</h1>
+        <p className="mt-2 text-sm text-muted">A tree shows how your inputs add up to one outcome. Formulas give exact maths; other links are learned from your history.</p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <button
             type="button"

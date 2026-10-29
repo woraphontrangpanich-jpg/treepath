@@ -43,14 +43,12 @@ export function buildSampleTree(tables: Table[]): Tree | null {
     node('Voucher Coverage', 240, 680, { metric: bind(tables, 'marketing.xlsx', 'voucher_coverage'), format: 'percent' }),
     node('Ad Spend', 800, 680, { metric: bind(tables, 'marketing.xlsx', 'ad_spend') }),
     node('Rain Index', 1040, 680, { metric: bind(tables, 'weather.csv', 'rain_index') }),
-    node('Campaign calendar', 1040, 520, { note: 'Big campaigns (Songkran, 11.11, New Year) lift ad spend; see marketing › Campaigns.' }),
   ]
   const byLabel = (l: string) => nodes.find((n) => n.label === l)!.id
   const manual: TreeEdge[] = [
     { id: newId('e'), source: byLabel('Ad Spend'), target: byLabel('Orders'), role: 'driver', lag: 1, expectedSign: 'positive' },
     { id: newId('e'), source: byLabel('Voucher Coverage'), target: byLabel('Orders'), role: 'driver', expectedSign: 'positive' },
     { id: newId('e'), source: byLabel('Rain Index'), target: byLabel('Orders'), role: 'driver', expectedSign: 'negative' },
-    { id: newId('e'), source: byLabel('Campaign calendar'), target: byLabel('Ad Spend'), role: 'influence' },
   ]
   const full: Tree = { ...tree, nodes, edges: manual, outcomeId: byLabel('Net Revenue') }
   return { ...full, edges: syncFormulaEdges(full) }

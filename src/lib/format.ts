@@ -22,19 +22,26 @@ export function plural(n: number, word: string) {
 
 const short = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 })
 
+const fixed = new Map<number, Intl.NumberFormat>()
+function nf(digits: number) {
+  let f = fixed.get(digits)
+  if (!f) fixed.set(digits, (f = new Intl.NumberFormat('en', { minimumFractionDigits: digits, maximumFractionDigits: digits })))
+  return f
+}
+
 /** Headline value for a metric card: compact, with % for percent metrics. */
 export function formatValue(v: number | null | undefined, format?: Column['format'] | 'number') {
   if (v === null || v === undefined || !Number.isFinite(v)) return '—'
-  if (format === 'percent') return `${(v * 100).toFixed(Math.abs(v) < 0.1 ? 2 : 1)}%`
+  if (format === 'percent') return `${nf(Math.abs(v) < 0.1 ? 2 : 1).format(v * 100)}%`
   const a = Math.abs(v)
   if (a >= 10_000) return short.format(v)
-  if (a >= 100) return v.toFixed(0)
-  if (a >= 1) return v.toFixed(2)
-  return v.toPrecision(3)
+  if (a >= 100) return nf(0).format(v)
+  if (a >= 1) return nf(2).format(v)
+  return new Intl.NumberFormat('en', { maximumSignificantDigits: 3 }).format(v)
 }
 
 export function formatChange(c: number | null) {
   if (c === null || !Number.isFinite(c)) return null
   const pct = c * 100
-  return `${pct > 0 ? '+' : ''}${pct.toFixed(Math.abs(pct) < 10 ? 1 : 0)}%`
+  return `${pct > 0 ? '+' : ''}${nf(Math.abs(pct) < 10 ? 1 : 0).format(pct)}%`
 }

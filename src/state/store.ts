@@ -2,13 +2,22 @@ import { del, get, set } from 'idb-keyval'
 import { create } from 'zustand'
 import type { Column, Link, Table } from '../data/types'
 
-export type Workspace = 'data' | 'build' | 'analyze' | 'scenario'
+export type Workspace = 'data' | 'build' | 'scenario'
+
+const WORKSPACES: Workspace[] = ['data', 'build', 'scenario']
+
+/** The URL hash holds the open tab, so links and reloads land on the same screen. */
+function workspaceFromHash(): Workspace {
+  const h = typeof location === 'undefined' ? '' : location.hash.replace('#', '')
+  return (WORKSPACES as string[]).includes(h) ? (h as Workspace) : 'data'
+}
 export type DataView = 'table' | 'links'
 
 interface Notice {
   id: number
   kind: 'info' | 'error'
   text: string
+  action?: { label: string; run: () => void }
 }
 
 interface State {
@@ -32,7 +41,7 @@ interface State {
   removeLink: (id: string) => void
   clearAll: () => void
   setBusy: (msg: string | null) => void
-  notify: (kind: Notice['kind'], text: string) => void
+  notify: (kind: Notice['kind'], text: string, action?: Notice['action']) => void
   dismiss: (id: number) => void
 }
 
@@ -43,13 +52,16 @@ export const useStore = create<State>((setState, getState) => ({
   hydrated: false,
   tables: [],
   links: [],
-  workspace: 'data',
+  workspace: workspaceFromHash(),
   dataView: 'table',
   selectedTableId: null,
   busy: null,
   notices: [],
 
-  setWorkspace: (workspace) => setState({ workspace }),
+  setWorkspace: (workspace) => {
+    if (location.hash !== `#${workspace}`) history.replaceState(null, '', `#${workspace}`)
+    setState({ workspace })
+  },
   setDataView: (dataView) => setState({ dataView }),
   selectTable: (selectedTableId) => setState({ selectedTableId, dataView: 'table' }),
 
@@ -97,10 +109,10 @@ export const useStore = create<State>((setState, getState) => ({
   },
 
   setBusy: (busy) => setState({ busy }),
-  notify: (kind, text) => {
+  notify: (kind, text, action) => {
     const id = noticeId++
-    setState((s) => ({ notices: [...s.notices, { id, kind, text }] }))
-    if (kind === 'info') setTimeout(() => getState().dismiss(id), 4000)
+    setState((s) => ({ notices: [...s.notices, { id, kind, text, action }] }))
+    if (kind === 'info') setTimeout(() => getState().dismiss(id), action ? 8000 : 4000)
   },
   dismiss: (id) => setState((s) => ({ notices: s.notices.filter((n) => n.id !== id) })),
 }))
@@ -115,11 +127,15 @@ interface Persisted {
 export async function hydrate() {
   try {
     const saved = await get<Persisted>(STORAGE_KEY)
+    // Older saves had separate "dimension" columns; they're now part of "Category / ID".
+    if (saved?.tables)
+      for (const t of saved.tables) t.columns = t.columns.map((c) => (c.role === 'dimension' ? { ...c, role: 'key' } : c))
     if (saved?.tables) useStore.setState({ tables: saved.tables, links: saved.links ?? [], selectedTableId: saved.selectedTableId ?? saved.tables[0]?.id ?? null })
   } catch (err) {
     console.warn('Treepath: could not read saved data', err)
   }
   useStore.setState({ hydrated: true })
+  window.addEventListener('hashchange', () => useStore.setState({ workspace: workspaceFromHash() }))
 
   let timer: ReturnType<typeof setTimeout> | undefined
   useStore.subscribe((s, prev) => {

@@ -97,7 +97,8 @@ export function suggestLinks(tables: Table[], existing: Link[]): LinkSuggestion[
       const toRef = { tableId: to.table.id, column: to.column.name }
       if (existing.some((l) => sameLink(l, fromRef, toRef))) continue
       const stats = linkStats(tables, { from: fromRef, to: toRef })
-      if (!stats) continue
+      // Only suggest links to a lookup (unique values on the target side); fact-to-fact pairs are noise.
+      if (!stats || stats.cardinality === 'many-to-many' || stats.cardinality === 'one-to-many') continue
       const nameMatch = normName(a.column.name) === normName(b.column.name)
       if (nameMatch && stats.matchRate >= 0.5) out.push({ from: fromRef, to: toRef, reason: 'same name', stats })
       else if (!nameMatch && stats.matchRate >= 0.8 && stats.matched >= 2) out.push({ from: fromRef, to: toRef, reason: 'matching values', stats })

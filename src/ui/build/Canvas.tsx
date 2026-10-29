@@ -3,7 +3,6 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MiniMap,
   Panel,
   ReactFlow,
   useReactFlow,
@@ -27,7 +26,7 @@ const nodeTypes = { card: NodeCard }
 const edgeTypes = { role: RoleEdge }
 
 export const DND_MIME = 'application/x-treepath'
-export type DragPayload = { kind: 'metric'; tableId: string; column: string } | { kind: 'formula' } | { kind: 'note' }
+export type DragPayload = { kind: 'metric'; tableId: string; column: string } | { kind: 'formula' }
 
 export function useAddFromPayload() {
   const tables = useStore((s) => s.tables)
@@ -45,8 +44,7 @@ export function useAddFromPayload() {
           metric: { tableId: t.id, fileName: t.fileName, sheetName: t.sheetName, column: col.name, aggregation: col.aggregation },
           ...(col.format ? { format: col.format } : {}),
         })
-      } else if (p.kind === 'formula') addNode({ label: uniqueLabel(tree, 'New formula'), position, formula: '' })
-      else addNode({ label: uniqueLabel(tree, 'Note'), position, note: '' })
+      } else addNode({ label: uniqueLabel(tree, 'New formula'), position, formula: '' })
     },
     [tables, addNode],
   )
@@ -150,7 +148,7 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
       const t = tree.nodes.find((n) => n.id === c.target)
       if (!s || !t) return
       if (tree.edges.some((e) => e.source === s.id && e.target === t.id)) return
-      const numeric = kindOf(s) !== 'note' && kindOf(t) === 'metric'
+      const numeric = kindOf(t) === 'metric'
       addEdge({ source: s.id, target: t.id, role: numeric ? 'driver' : 'influence' })
       if (kindOf(t) === 'formula')
         notify('info', `Added an influence link. To use ${s.label} in the maths, add [${s.label}] to ${t.label}'s formula.`)
@@ -196,7 +194,6 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
     >
       <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--line)" />
       <Controls showInteractive={false} position="bottom-right" />
-      <MiniMap position="bottom-left" pannable zoomable style={{ width: 150, height: 100 }} nodeColor={(n) => ((n.data as CardData).kind === 'formula' ? 'var(--formula)' : 'var(--faint)')} />
       <Panel position="top-right">
         <Legend />
       </Panel>
@@ -205,8 +202,7 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
           <div className="max-w-sm rounded-2xl border border-dashed border-line bg-surface/90 p-6 text-center">
             <p className="font-semibold">Empty tree</p>
             <p className="mt-1 text-sm text-muted">
-              Drag metrics from the library onto the canvas, or double-click one. Then connect a card&apos;s top dot to the bottom of the card it
-              drives.
+              Click a metric in the library to add it. Then drag from a card&apos;s top dot to the card it affects.
             </p>
           </div>
         </Panel>
@@ -215,4 +211,3 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
   )
 }
 
-type CardData = CardNode['data']

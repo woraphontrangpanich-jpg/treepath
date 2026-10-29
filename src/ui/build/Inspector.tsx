@@ -10,6 +10,7 @@ import { findByLabel, tryParse } from '../../tree/graph'
 import { MANUAL_ROLES, ROLES } from '../../tree/roles'
 import { kindOf, type BindingFilter, type EdgeRole, type MetricBinding, type NodeFormat, type Tree, type TreeNode } from '../../tree/types'
 import { Badge, Button, Segmented, Select } from '../primitives'
+import { LagScan, ModelSummary, interpret, reliability } from './ModelInfo'
 import type { TreeModel } from './useTreeModel'
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
@@ -38,11 +39,11 @@ export function Inspector({ tree, model }: { tree: Tree; model: TreeModel }) {
   const node = selection?.kind === 'node' ? tree.nodes.find((n) => n.id === selection.id) : undefined
   const edge = selection?.kind === 'edge' ? tree.edges.find((e) => e.id === selection.id) : undefined
   return (
-    <aside className="flex w-80 shrink-0 flex-col overflow-y-auto border-l border-line bg-surface">
+    <aside className="flex w-80 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-line bg-surface">
       {node ? (
         <NodeInspector key={node.id} tree={tree} node={node} model={model} />
       ) : edge ? (
-        <EdgeInspector key={edge.id} tree={tree} edgeId={edge.id} />
+        <EdgeInspector key={edge.id} tree={tree} edgeId={edge.id} model={model} />
       ) : (
         <TreeOverview tree={tree} model={model} />
       )}
@@ -67,9 +68,7 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
       <Section title="Outcome">
         <Select value={tree.outcomeId ?? ''} onChange={(e) => setOutcome(e.target.value || undefined)} className="w-full">
           <option value="">Choose the outcome…</option>
-          {tree.nodes
-            .filter((n) => kindOf(n) !== 'note')
-            .map((n) => (
+          {tree.nodes.map((n) => (
               <option key={n.id} value={n.id}>
                 {n.label}
               </option>
@@ -81,7 +80,7 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
             <div className="font-mono text-2xl tabular">{formatValue(outcomeSummary.latest?.value, model.series.byNode.get(outcome.id)?.format)}</div>
           </div>
         )}
-        <p className="text-[11px] leading-4 text-faint">The outcome is the target Scenario will estimate, e.g. Revenue or Profit.</p>
+        <p className="text-[11px] leading-4 text-faint">The number you want to forecast, e.g. Revenue or Profit.</p>
       </Section>
       <Section title={`Checks${model.issues.length ? ` · ${model.issues.length}` : ''}`}>
         {model.issues.length === 0 ? (
@@ -105,14 +104,16 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
             ))}
           </ul>
         )}
-        {errors.length > 0 && <p className="text-[11px] text-faint">Scenario needs these errors fixed first.</p>}
+        {errors.length > 0 && <p className="text-[11px] text-faint">Fix these before forecasting.</p>}
       </Section>
       <Section title="How to build">
         <ul className="list-disc space-y-1.5 pl-4 text-xs text-muted">
-          <li>Drag metrics from the library, or add a Formula card.</li>
-          <li>Drag from a card&apos;s top dot to the bottom of the card it drives. New links between metrics default to Model driver.</li>
-          <li>Formula links appear automatically from <span className="font-mono">[Card Name]</span> references.</li>
-          <li>Select a card or link to edit it. Press Delete to remove it.</li>
+          <li>Add metrics from the library on the left, or a Formula card.</li>
+          <li>Drag from a card&apos;s top dot to the card it affects. Treepath learns the effect from your history.</li>
+          <li>
+            In a formula, write <span className="font-mono">[Card Name]</span>; its links draw themselves.
+          </li>
+          <li>Select a card or link to edit it. Press Delete to remove it; you can undo.</li>
         </ul>
       </Section>
     </>
@@ -137,9 +138,8 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
 
   const setKind = (k: string) => {
     if (k === kind) return
-    if (k === 'formula') updateNode(node.id, { formula: '', note: undefined })
-    else if (k === 'metric') updateNode(node.id, { formula: undefined, note: undefined, metric: node.metric ?? defaultBinding(tables) })
-    else updateNode(node.id, { formula: undefined, metric: undefined, note: node.note ?? '' })
+    if (k === 'formula') updateNode(node.id, { formula: '' })
+    else updateNode(node.id, { formula: undefined, metric: node.metric ?? defaultBinding(tables) })
   }
 
   return (
@@ -159,6 +159,8 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
           onChange={(e) => setLabel(e.target.value)}
           onBlur={commitLabel}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          autoComplete="off"
+          name="card-name"
           aria-label="Card name"
           className="w-full rounded-md border border-transparent bg-transparent px-1 text-lg font-semibold outline-none hover:border-line focus:border-accent"
         />
@@ -169,7 +171,6 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
           options={[
             { value: 'metric', label: 'Metric' },
             { value: 'formula', label: 'Formula' },
-            { value: 'note', label: 'Note' },
           ]}
         />
         {nodeIssues.map((i, k) => (
@@ -181,12 +182,12 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
 
       {kind === 'formula' && <FormulaEditor tree={tree} node={node} />}
 
-      {kind !== 'note' && (
-        <Section title={kind === 'formula' ? 'Compare with actual data (optional)' : 'Data'}>
+      {(
+        <Section title={kind === 'formula' ? 'Compare With Actual Data (Optional)' : 'Data'}>
           {kind === 'formula' && !node.metric ? (
             <Button size="sm" onClick={() => updateNode(node.id, { metric: defaultBinding(tables) })}>
               <Plus className="size-3.5" />
-              Bind an actual column
+              Compare With Actual Data
             </Button>
           ) : (
             <BindingEditor
@@ -201,19 +202,14 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
         </Section>
       )}
 
-      {kind === 'note' && (
-        <Section title="Note">
-          <textarea
-            value={node.note ?? ''}
-            onChange={(e) => updateNode(node.id, { note: e.target.value })}
-            rows={5}
-            className="w-full rounded-md border border-line bg-surface p-2 text-sm outline-none focus:border-accent"
-            placeholder="Context, assumptions, strategy…"
-          />
+
+      {model.models.get(node.id) && (
+        <Section title="Learned From History">
+          <ModelSummary fit={model.models.get(node.id)!} grain={tree.grain} />
         </Section>
       )}
 
-      {kind !== 'note' && (
+      {(
         <Section title="Values">
           {series?.error ? (
             <p className="text-sm text-down">{series.error}</p>
@@ -237,21 +233,20 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
               )}
             </dl>
           )}
-          <Field label="Display as">
+          <Field label="Show as">
             <Select value={node.format ?? 'number'} onChange={(e) => updateNode(node.id, { format: e.target.value as NodeFormat })} className="w-full">
               <option value="number">Number</option>
               <option value="percent">Percent</option>
-              <option value="currency">Currency</option>
             </Select>
           </Field>
         </Section>
       )}
 
       <div className="mt-auto flex gap-2 border-t border-line p-4">
-        {kind !== 'note' && (
+        {(
           <Button size="sm" onClick={() => setOutcome(tree.outcomeId === node.id ? undefined : node.id)} className="flex-1">
             <Target className="size-3.5" />
-            {tree.outcomeId === node.id ? 'Unset outcome' : 'Set as outcome'}
+            {tree.outcomeId === node.id ? 'Unset Outcome' : 'Set as Outcome'}
           </Button>
         )}
         <Button size="sm" variant="danger" onClick={() => removeNodes([node.id])}>
@@ -276,7 +271,7 @@ function FormulaEditor({ tree, node }: { tree: Tree; node: TreeNode }) {
   const ref = useRef<HTMLTextAreaElement>(null)
   const formula = node.formula ?? ''
   const parsed = formula.trim() ? tryParse(formula) : null
-  const others = tree.nodes.filter((n) => n.id !== node.id && kindOf(n) !== 'note')
+  const others = tree.nodes.filter((n) => n.id !== node.id)
 
   const insert = (text: string) => {
     const el = ref.current
@@ -303,7 +298,7 @@ function FormulaEditor({ tree, node }: { tree: Tree; node: TreeNode }) {
           onChange={(e) => updateNode(node.id, { formula: e.target.value })}
           rows={3}
           spellCheck={false}
-          placeholder="[Orders] * [Realized Price]"
+          placeholder="e.g. [Orders] * [Realized Price]…"
           className={clsx(
             'w-full rounded-md border bg-surface p-2 text-[13px] leading-5 outline-none',
             parsed && !parsed.ok ? 'border-down' : 'border-line focus:border-accent',
@@ -357,7 +352,8 @@ function FormulaEditor({ tree, node }: { tree: Tree; node: TreeNode }) {
   )
 }
 
-const AGGS: Aggregation[] = ['sum', 'avg', 'min', 'max', 'last', 'count']
+const AGGS: Aggregation[] = ['sum', 'avg', 'count']
+const AGG_LABEL: Record<Aggregation, string> = { sum: 'Sum', avg: 'Average', count: 'Count', min: 'Min', max: 'Max', last: 'Last' }
 
 function BindingEditor({ binding, onChange, onRemove }: { binding?: MetricBinding; onChange: (b: MetricBinding) => void; onRemove?: () => void }) {
   const tables = useStore((s) => s.tables)
@@ -420,9 +416,9 @@ function BindingEditor({ binding, onChange, onRemove }: { binding?: MetricBindin
         </Field>
         <Field label="Combine">
           <Select value={binding.aggregation} onChange={(e) => onChange({ ...binding, aggregation: e.target.value as Aggregation })}>
-            {AGGS.map((a) => (
+            {[...new Set([...AGGS, binding.aggregation])].map((a) => (
               <option key={a} value={a}>
-                {a}
+                {AGG_LABEL[a]}
               </option>
             ))}
           </Select>
@@ -481,7 +477,7 @@ function BindingEditor({ binding, onChange, onRemove }: { binding?: MetricBindin
       )}
       {onRemove && (
         <Button size="sm" variant="ghost" onClick={onRemove}>
-          Remove data binding
+          Remove Actual Data
         </Button>
       )}
     </div>
@@ -495,12 +491,14 @@ function distinctValues(t: Table, column: string) {
   return [...set].sort((a, b) => String(a).localeCompare(String(b))).slice(0, 200)
 }
 
-function EdgeInspector({ tree, edgeId }: { tree: Tree; edgeId: string }) {
+function EdgeInspector({ tree, edgeId, model }: { tree: Tree; edgeId: string; model: TreeModel }) {
   const { updateEdge, removeEdges, select } = useTrees.getState()
   const edge = tree.edges.find((e) => e.id === edgeId)!
   const s = tree.nodes.find((n) => n.id === edge.source)
   const t = tree.nodes.find((n) => n.id === edge.target)
   const meta = ROLES[edge.role]
+  const fit = edge.role === 'driver' ? model.models.get(edge.target) : undefined
+  const term = fit?.ok ? fit.terms.find((x) => x.edgeId === edge.id) : undefined
   return (
     <>
       <div className="space-y-3 px-4 py-4">
@@ -565,13 +563,25 @@ function EdgeInspector({ tree, edgeId }: { tree: Tree; edgeId: string }) {
             )}
           </>
         )}
+        {edge.role === 'driver' && fit?.ok && term && (
+          <div className="space-y-2 rounded-lg border border-line p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted">Learned effect</span>
+              <Badge tone={reliability(term.p).tone}>{reliability(term.p).label}</Badge>
+            </div>
+            <p className="text-sm">{interpret(fit, term, tree.grain)}</p>
+            <div className="text-[11px] text-muted">How strongly they move together at each lag:</div>
+            <LagScan term={term} onUse={(lag) => updateEdge(edge.id, { lag: lag || undefined })} />
+          </div>
+        )}
+        {edge.role === 'driver' && fit && !fit.ok && <p className="rounded-lg bg-down-soft px-2.5 py-2 text-xs">{fit.error}</p>}
         <Field label="Note">
           <textarea
             value={edge.note ?? ''}
             onChange={(e) => updateEdge(edge.id, { note: e.target.value || undefined })}
             rows={2}
             className="w-full rounded-md border border-line bg-surface p-2 text-sm outline-none focus:border-accent"
-            placeholder="Why do you believe this?"
+            placeholder="e.g. campaigns lift orders a week later…"
           />
         </Field>
       </Section>
@@ -579,7 +589,7 @@ function EdgeInspector({ tree, edgeId }: { tree: Tree; edgeId: string }) {
         <div className="mt-auto border-t border-line p-4">
           <Button size="sm" variant="danger" onClick={() => removeEdges([edge.id])}>
             <Trash2 className="size-3.5" />
-            Delete link
+            Delete Link
           </Button>
         </div>
       )}

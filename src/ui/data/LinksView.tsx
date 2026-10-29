@@ -1,4 +1,3 @@
-import { clsx } from 'clsx'
 import { ArrowRight, Link2, Plus, Sparkles, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { findTable, linkStats, suggestLinks, type LinkStats } from '../../data/links'
@@ -42,15 +41,12 @@ export function LinksView() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Table links</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">Table Links</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Link tables through a shared key column, like a primary key. All tables are already lined up by date, so links are for
-          keys such as <span className="font-mono text-ink">region_code</span> or <span className="font-mono text-ink">store_id</span>. Links let a
-          metric from one file be filtered or broken down by attributes in another.
+          Connect files through a shared ID column, like <span className="font-mono text-ink">region_code</span>. Tables already line up by date;
+          links let you filter a metric from one file by a column in another.
         </p>
       </header>
-
-      <LinkDiagram tables={tables} links={links} />
 
       {suggestions.length > 0 && (
         <section>
@@ -64,8 +60,6 @@ export function LinksView() {
             {suggestions.map((s, i) => (
               <li key={i} className="flex items-center gap-3 rounded-xl border border-dashed border-line bg-surface px-4 py-3">
                 <LinkEnds tables={tables} from={s.from} to={s.to} />
-                <Badge>{s.reason}</Badge>
-                <Badge>{s.stats.cardinality}</Badge>
                 <MatchBadge stats={s.stats} />
                 <Button size="sm" variant="primary" onClick={() => addLink({ from: s.from, to: s.to })}>
                   <Plus className="size-3.5" />
@@ -81,7 +75,7 @@ export function LinksView() {
         <SectionTitle>Active links</SectionTitle>
         {links.length === 0 ? (
           <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-sm text-muted">
-            No links yet. Accept a suggestion above or create one below.
+            No links yet. Accept a suggestion, or link tables manually below.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -92,7 +86,17 @@ export function LinksView() {
         )}
       </section>
 
-      <NewLinkForm tables={tables} onAdd={addLink} />
+      <details className="group rounded-xl border border-line bg-surface" open={links.length === 0 && suggestions.length === 0}>
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium hover:bg-surface-2">
+          <span className="inline-flex items-center gap-2">
+            <Plus className="size-4 text-faint" />
+            Link Tables Manually
+          </span>
+        </summary>
+        <div className="border-t border-line p-4">
+          <NewLinkForm tables={tables} onAdd={addLink} />
+        </div>
+      </details>
     </div>
   )
 }
@@ -161,8 +165,7 @@ function NewLinkForm({ tables, onAdd }: { tables: Table[]; onAdd: (l: Omit<Link,
 
   return (
     <section>
-      <SectionTitle>Create a link</SectionTitle>
-      <div className="rounded-xl border border-line bg-surface p-4">
+      <div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           {side(from, setFrom, 'From (many rows, e.g. daily sales)')}
           <ArrowRight className="mx-auto mb-2 hidden size-4 text-faint sm:block" />
@@ -185,71 +188,10 @@ function NewLinkForm({ tables, onAdd }: { tables: Table[]; onAdd: (l: Omit<Link,
             }}
           >
             <Plus className="size-4" />
-            Add link
+            Add Link
           </Button>
         </div>
       </div>
     </section>
-  )
-}
-
-const BOX_W = 200
-const BOX_H = 52
-const GAP_X = 70
-const GAP_Y = 56
-
-function LinkDiagram({ tables, links }: { tables: Table[]; links: Link[] }) {
-  if (tables.length === 0) return null
-  const cols = Math.min(3, tables.length)
-  const rows = Math.ceil(tables.length / cols)
-  const width = cols * BOX_W + (cols - 1) * GAP_X
-  const height = rows * BOX_H + (rows - 1) * GAP_Y
-  const pos = new Map(
-    tables.map((t, i) => [t.id, { x: (i % cols) * (BOX_W + GAP_X), y: Math.floor(i / cols) * (BOX_H + GAP_Y) }]),
-  )
-  const linked = new Set(links.flatMap((l) => [l.from.tableId, l.to.tableId]))
-
-  return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-surface p-6">
-      <svg viewBox={`-4 -4 ${width + 8} ${height + 8}`} width={width + 8} className="mx-auto block max-w-full" role="img" aria-label="Diagram of linked tables">
-        {links.map((l) => {
-          const a = pos.get(l.from.tableId)
-          const b = pos.get(l.to.tableId)
-          if (!a || !b) return null
-          const x1 = a.x + BOX_W / 2
-          const y1 = a.y + BOX_H / 2
-          const x2 = b.x + BOX_W / 2
-          const y2 = b.y + BOX_H / 2
-          return (
-            <g key={l.id}>
-              <line x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth="2" className="stroke-accent" />
-              <text x={(x1 + x2) / 2} y={(y1 + y2) / 2 - 6} textAnchor="middle" className="fill-muted font-mono text-[10px]">
-                {l.from.column === l.to.column ? l.from.column : `${l.from.column} = ${l.to.column}`}
-              </text>
-            </g>
-          )
-        })}
-        {tables.map((t) => {
-          const p = pos.get(t.id)!
-          return (
-            <g key={t.id} transform={`translate(${p.x},${p.y})`}>
-              <rect
-                width={BOX_W}
-                height={BOX_H}
-                rx="10"
-                strokeWidth="1.5"
-                className={clsx('fill-surface', linked.has(t.id) ? 'stroke-accent' : 'stroke-line')}
-              />
-              <text x="14" y="22" className="fill-ink text-[13px] font-semibold">
-                {t.name.length > 24 ? `${t.name.slice(0, 23)}…` : t.name}
-              </text>
-              <text x="14" y="39" className="fill-muted text-[11px]">
-                {t.columns.filter((c) => c.role === 'metric').length} metrics · {t.rows.length.toLocaleString()} rows
-              </text>
-            </g>
-          )
-        })}
-      </svg>
-    </div>
   )
 }

@@ -1,6 +1,9 @@
 import type { SeriesPoint } from '../data/types'
 import type { TreeSeries } from '../tree/compute'
-import type { ModelType, NodeFormat, Tree, TreeEdge } from '../tree/types'
+import type { NodeFormat, Tree, TreeEdge } from '../tree/types'
+
+/** change: period-over-period change on a log/logit scale (elasticity-style, robust to trends). level: raw values. */
+export type ModelType = 'change' | 'level'
 import { ols, predict, vif } from './regression'
 import { correlation, mean } from './stats'
 
@@ -173,7 +176,7 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
   const edges = tree.edges.filter((e) => e.target === targetId && e.role === 'driver')
   const ts = series.byNode.get(targetId)
   if (!ts || ts.points.length === 0) return { ok: false, ...base, error: ts?.error ?? `${target.label} has no data` }
-  const type: ModelType = target.modelType ?? 'change'
+  const type: ModelType = 'change'
   const tt = type === 'change' ? chooseTransform(ts.points, ts.format) : 'raw'
   const warnings: string[] = []
 

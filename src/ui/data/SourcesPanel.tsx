@@ -50,11 +50,11 @@ export function SourcesPanel() {
         <h2 className="text-[13px] font-semibold tracking-wide text-muted uppercase">Sources</h2>
         <FilePicker>
           <Plus className="size-4" />
-          Add files
+          Add Files
         </FilePicker>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2 pb-2">
+      <nav className="flex-1 overflow-y-auto overscroll-contain px-2 pb-2" aria-label="Imported tables">
         {byFile.map(([file, ts]) => (
           <div key={file} className="mt-2">
             <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-faint">
@@ -98,12 +98,12 @@ export function SourcesPanel() {
           )}
         >
           <Link2 className={clsx('size-4', dataView === 'links' ? 'text-accent' : 'text-faint')} />
-          <span className="flex-1">Table links</span>
+          <span className="flex-1">Table Links</span>
           <span className="rounded-md bg-surface-2 px-1.5 text-xs text-muted ring-1 ring-line tabular">{links.length}</span>
         </button>
         <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => void loadSamples()} title="Re-import the bundled sample files">
           <Sparkles className="size-3.5" />
-          Load sample data
+          Load Sample Data
         </Button>
         <Button
           variant="danger"
@@ -114,7 +114,7 @@ export function SourcesPanel() {
           }}
         >
           <Trash2 className="size-3.5" />
-          Clear all data
+          Clear All Data
         </Button>
       </div>
     </aside>

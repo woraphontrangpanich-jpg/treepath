@@ -29,7 +29,7 @@ export function Legend() {
         })}
       </ul>
       <p className="mt-2.5 border-t border-line pt-2 text-[10.5px] leading-4 text-faint">
-        Inputs sit below, outcomes above. Only “calc” links move numbers in Scenario.
+        Inputs sit below, outcomes above. Only “calc” links move numbers in a forecast.
       </p>
     </div>
   )

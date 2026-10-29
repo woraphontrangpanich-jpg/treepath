@@ -1,5 +1,5 @@
 import { deductedRefs, FormulaError, formulaRefs, parseFormula, type Ast } from './formula'
-import { kindOf, type EdgeRole, type Tree, type TreeEdge, type TreeNode } from './types'
+import type { EdgeRole, Tree, TreeEdge, TreeNode } from './types'
 
 export const NUMERIC_ROLES: ReadonlySet<EdgeRole> = new Set(['formula', 'cost', 'driver'])
 export const FORMULA_ROLES: ReadonlySet<EdgeRole> = new Set(['formula', 'cost'])
@@ -113,8 +113,6 @@ export function validateTree(tree: Tree): Issue[] {
     const s = tree.nodes.find((n) => n.id === e.source)
     const t = tree.nodes.find((n) => n.id === e.target)
     if (!s || !t) issues.push({ level: 'error', message: 'A link points at a missing card.', edgeId: e.id })
-    else if (NUMERIC_ROLES.has(e.role) && (kindOf(s) === 'note' || kindOf(t) === 'note'))
-      issues.push({ level: 'warn', message: `${s.label} → ${t.label}: notes carry no numbers; use an influence link.`, edgeId: e.id })
   }
 
   const { cyclic } = topoOrder(tree.nodes, tree.edges)
@@ -127,4 +125,20 @@ export function validateTree(tree: Tree): Issue[] {
 
   if (tree.nodes.length > 0 && !tree.outcomeId) issues.push({ level: 'warn', message: 'No outcome chosen. Select a card and mark it as the outcome.' })
   return issues
+}
+
+/**
+ * Upgrade trees saved by earlier versions: note cards are gone, and the old
+ * "leading indicator" / "correlation" links are now plain influence links.
+ */
+export function normalizeTree(tree: Tree): Tree {
+  type Legacy = TreeNode & { note?: string; modelType?: string }
+  const nodes = (tree.nodes as Legacy[])
+    .filter((n) => n.formula !== undefined || n.metric)
+    .map(({ note: _n, modelType: _m, ...n }) => ({ ...n, format: n.format === 'percent' ? 'percent' : n.format ? 'number' : undefined }) as TreeNode)
+  const ids = new Set(nodes.map((n) => n.id))
+  const edges = tree.edges
+    .filter((e) => ids.has(e.source) && ids.has(e.target))
+    .map((e) => (['formula', 'cost', 'driver', 'influence'].includes(e.role) ? e : { ...e, role: 'influence' as const }))
+  return { ...tree, nodes, edges, outcomeId: tree.outcomeId && ids.has(tree.outcomeId) ? tree.outcomeId : undefined }
 }

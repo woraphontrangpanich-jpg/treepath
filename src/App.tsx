@@ -1,7 +1,6 @@
 import { clsx } from 'clsx'
 import { Loader2, X } from 'lucide-react'
 import { useStore } from './state/store'
-import { AnalyzeWorkspace } from './ui/analyze/AnalyzeWorkspace'
 import { BuildWorkspace } from './ui/build/BuildWorkspace'
 import { DataWorkspace } from './ui/data/DataWorkspace'
 import { ScenarioWorkspace } from './ui/scenario/ScenarioWorkspace'
@@ -28,6 +27,18 @@ function Notices() {
           )}
         >
           <span className="flex-1">{n.text}</span>
+          {n.action && (
+            <button
+              type="button"
+              onClick={() => {
+                n.action!.run()
+                dismiss(n.id)
+              }}
+              className="font-semibold text-accent hover:underline"
+            >
+              {n.action.label}
+            </button>
+          )}
           <button type="button" onClick={() => dismiss(n.id)} className="text-faint hover:text-ink" aria-label="Dismiss">
             <X className="size-4" />
           </button>
@@ -51,8 +62,6 @@ export default function App() {
         <DataWorkspace />
       ) : workspace === 'build' ? (
         <BuildWorkspace />
-      ) : workspace === 'analyze' ? (
-        <AnalyzeWorkspace />
       ) : (
         <ScenarioWorkspace />
       )}

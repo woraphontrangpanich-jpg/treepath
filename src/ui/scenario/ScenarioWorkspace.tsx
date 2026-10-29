@@ -11,7 +11,7 @@ import { activeScenario, activeTree, useTrees } from '../../state/trees'
 import { kindOf, type AdjustmentKind, type Assumption, type Scenario, type Tree } from '../../tree/types'
 import { Canvas } from '../build/Canvas'
 import { useTreeModel, type TreeModel } from '../build/useTreeModel'
-import { Badge, Button, Segmented, Select } from '../primitives'
+import { Badge, Button, Select } from '../primitives'
 
 const WINDOWS: Record<Grain, number[]> = { day: [1, 7, 28, 90], week: [1, 4, 13], month: [1, 3, 12] }
 
@@ -92,14 +92,14 @@ function ScenarioView({ tree, scenario }: { tree: Tree; scenario: Scenario }) {
 }
 
 function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scenario; model: TreeModel; result: ScenarioResult }) {
-  const { setOutcome, setGrain, setBaselineWindow } = useTrees.getState()
+  const { setOutcome, setBaselineWindow } = useTrees.getState()
   const errors = model.issues.filter((i) => i.level === 'error')
   const fmtOf = (id: string) => model.series.byNode.get(id)?.format
 
   return (
-    <aside className="flex w-[440px] shrink-0 flex-col overflow-y-auto border-l border-line bg-surface">
+    <aside className="flex w-[440px] shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-line bg-surface">
       <div className="border-b border-line px-5 pt-4 pb-3">
-        <div className="text-[11px] font-semibold tracking-wider text-accent uppercase">Scenario planner</div>
+        <div className="text-[11px] font-semibold tracking-wider text-accent uppercase">Forecast</div>
         <h2 className="mt-0.5 text-lg font-semibold">Change an input, follow it to the outcome</h2>
         {errors.length > 0 && (
           <p className="mt-2 flex items-start gap-2 rounded-lg bg-down-soft px-3 py-2 text-xs">
@@ -112,13 +112,11 @@ function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scen
             <span className="text-xs text-muted">Outcome to estimate</span>
             <Select value={tree.outcomeId ?? ''} onChange={(e) => setOutcome(e.target.value || undefined)} className="w-full">
               <option value="">Choose…</option>
-              {tree.nodes
-                .filter((n) => kindOf(n) !== 'note')
-                .map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.label}
-                  </option>
-                ))}
+              {tree.nodes.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.label}
+                </option>
+              ))}
             </Select>
           </label>
           <label className="space-y-1">
@@ -135,16 +133,7 @@ function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scen
           </label>
         </div>
         <div className="mt-3 flex items-center justify-between gap-3">
-          <Segmented<Grain>
-            size="sm"
-            value={tree.grain}
-            onChange={setGrain}
-            options={[
-              { value: 'day', label: 'Day' },
-              { value: 'week', label: 'Week' },
-              { value: 'month', label: 'Month' },
-            ]}
-          />
+          <span className="text-[11px] text-faint">Values per {tree.grain}</span>
           {result.baseline.from && (
             <span className="text-[11px] text-faint tabular">
               baseline {result.baseline.from === result.baseline.to ? result.baseline.from : `${result.baseline.from} → ${result.baseline.to}`}
@@ -164,7 +153,7 @@ function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scen
         </Collapsible>
       )}
       <p className="mt-auto px-5 py-3 text-[11px] leading-4 text-faint">
-        Scenario values are estimates and never change your data. Formula links are exact; model-driver links use the fitted history from Analyze, at
+        Forecasts are estimates and never change your data. Formula links are exact; model-driver links use effects learned from your history, at
         steady state after any lag.
       </p>
     </aside>
@@ -202,7 +191,10 @@ function DescribeChange({ tree }: { tree: Tree }) {
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={`e.g. increase ${firstInput?.label ?? 'Ad Spend'} 20%`}
+          placeholder={`e.g. increase ${firstInput?.label ?? 'Ad Spend'} 20%…`}
+          name="change"
+          autoComplete="off"
+          aria-label="Describe the change"
           className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none focus:border-accent"
         />
         <Button type="submit" variant="primary" disabled={!text.trim()}>
@@ -222,7 +214,7 @@ function OutcomeEstimate({ tree, result, fmtOf }: { tree: Tree; result: Scenario
   if (!outcomeNode || !o)
     return (
       <Section n={2} title="Outcome estimate">
-        <p className="text-sm text-muted">Choose an outcome above (e.g. Revenue or Profit) to see the estimate.</p>
+        <p className="text-sm text-muted">Choose the outcome above, e.g. Revenue or Profit, to see the estimate.</p>
       </Section>
     )
   const fmt = fmtOf(outcomeNode.id)
@@ -297,7 +289,7 @@ function RangeBar({ base, value, p5, p95 }: { base: number; value: number; p5: n
   )
 }
 
-type FmtOf = (id: string) => 'percent' | 'currency' | 'integer' | 'number' | undefined
+type FmtOf = (id: string) => 'percent' | 'number' | undefined
 
 const KIND_LABEL: Record<AdjustmentKind, string> = { pct: 'Change by %', add: 'Add amount', set: 'Set to' }
 
@@ -388,7 +380,7 @@ function InputControls({ tree, scenario, model, result, fmtOf }: { tree: Tree; s
           scenario.assumptions.length > 0 ? (
             <button type="button" onClick={clearAssumptions} className="inline-flex items-center gap-1 text-accent hover:underline">
               <RotateCcw className="size-3" />
-              reset
+              Reset
             </button>
           ) : undefined
         }
@@ -403,7 +395,7 @@ function InputControls({ tree, scenario, model, result, fmtOf }: { tree: Tree; s
             Show all {sorted.length} inputs ({sorted.length - visible.length} hidden)
           </button>
         )}
-        {inputs.length === 0 && <p className="text-sm text-muted">No input cards with data. Add metric cards in Build.</p>}
+        {inputs.length === 0 && <p className="text-sm text-muted">No input cards with data yet. Add metric cards in Build.</p>}
       </Section>
       {modelled.length > 0 && (
         <Collapsible title="Advanced · override model estimates" defaultOpen={modelled.some((n) => assumed.has(n.id))}>
@@ -445,10 +437,10 @@ function ScenarioManager({ tree, scenario, model, fmtOf }: { tree: Tree; scenari
             {s.assumptions.length > 0 && <span className="ml-1 opacity-60">· {s.assumptions.length}</span>}
           </button>
         ))}
-        <Button size="sm" variant="ghost" onClick={() => addScenario(false)} title="New empty scenario">
+        <Button size="sm" variant="ghost" onClick={() => addScenario(false)} title="New empty scenario" aria-label="New scenario">
           <Plus className="size-3.5" />
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => addScenario(true)} title="Duplicate this scenario">
+        <Button size="sm" variant="ghost" onClick={() => addScenario(true)} title="Duplicate this scenario" aria-label="Duplicate scenario">
           <Copy className="size-3.5" />
         </Button>
       </div>
@@ -457,10 +449,18 @@ function ScenarioManager({ tree, scenario, model, fmtOf }: { tree: Tree; scenari
           value={scenario.name}
           onChange={(e) => renameScenario(e.target.value)}
           aria-label="Scenario name"
+          name="scenario-name"
+          autoComplete="off"
           className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface px-2 text-sm outline-none focus:border-accent"
         />
         {scenarios.length > 1 && (
-          <Button size="sm" variant="danger" onClick={() => deleteScenario(scenario.id)} title="Delete scenario">
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => confirm(`Delete scenario “${scenario.name}”?`) && deleteScenario(scenario.id)}
+            title="Delete scenario"
+            aria-label="Delete scenario"
+          >
             <Trash2 className="size-3.5" />
           </Button>
         )}

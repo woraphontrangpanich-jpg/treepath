@@ -46,17 +46,17 @@ function DropZone({ children }: { children: React.ReactNode }) {
 function Welcome() {
   const { loadSamples } = useImport()
   const steps = [
-    { icon: FileUp, title: 'Import', text: 'Add one or more Excel/CSV files. Columns are typed automatically: dates, keys, metrics.' },
-    { icon: Link2, title: 'Link', text: 'Connect tables through shared keys such as region or store ID.' },
-    { icon: GitBranch, title: 'Build & forecast', text: 'Draw how metrics drive your outcome, then test what happens when an input changes.' },
+    { icon: FileUp, title: 'Data', text: 'Add Excel or CSV files. Dates, IDs and metrics are detected for you.' },
+    { icon: GitBranch, title: 'Build', text: 'Draw how your metrics add up to one outcome, like Net Revenue.' },
+    { icon: Link2, title: 'Forecast', text: 'Type a change, like “increase Ad Spend 20%”, and see the impact.' },
   ]
   return (
     <div className="grid flex-1 place-items-center overflow-y-auto p-8">
       <div className="w-full max-w-3xl text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-balance">See how every change finds its way to your outcome.</h1>
+        <h1 className="text-4xl font-semibold tracking-tight text-balance">See how every change reaches your bottom line.</h1>
         <p className="mx-auto mt-4 max-w-xl text-base text-muted text-balance">
-          Treepath turns spreadsheets into a metric tree and estimates how a change in one driver, like ad spend, moves revenue
-          or profit. Everything runs in your browser; your files never leave this device.
+          Upload your Excel files, draw how your numbers connect, and forecast what happens to revenue or profit when something
+          changes. Everything runs in your browser; your files never leave this device.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <FilePicker variant="primary">
@@ -65,7 +65,7 @@ function Welcome() {
           </FilePicker>
           <Button onClick={() => void loadSamples()}>
             <Sparkles className="size-4" />
-            Try sample data
+            Try Sample Data
           </Button>
         </div>
         <p className="mt-3 text-xs text-faint">or drop files anywhere on this page · .xlsx .xls .csv .tsv .ods</p>

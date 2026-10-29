@@ -1,4 +1,4 @@
-import type { Aggregation, Column, Grain } from '../data/types'
+import type { Aggregation, Grain } from '../data/types'
 
 /** Restricts a metric to rows whose `column` is one of `values`; `tableId` may be a linked table. */
 export interface BindingFilter {
@@ -17,7 +17,7 @@ export interface MetricBinding {
   filters?: BindingFilter[]
 }
 
-export type NodeFormat = NonNullable<Column['format']> | 'number'
+export type NodeFormat = 'percent' | 'number'
 
 export interface TreeNode {
   id: string
@@ -27,18 +27,8 @@ export interface TreeNode {
   metric?: MetricBinding
   /** Expression over other nodes, e.g. `[Orders] * [Realized Price]`. Makes this a formula node. */
   formula?: string
-  /** Free text: a note node when neither metric nor formula is set. */
-  note?: string
   format?: NodeFormat
-  /** How model-driver inputs are fitted when this card is a regression target. Defaults to 'change'. */
-  modelType?: ModelType
 }
-
-/**
- * - change: period-over-period change on a log/logit scale (elasticity-style, robust to trends)
- * - level: raw values (target = a + b·driver)
- */
-export type ModelType = 'change' | 'level'
 
 export type AdjustmentKind = 'pct' | 'add' | 'set'
 
@@ -57,20 +47,18 @@ export interface Scenario {
   baselineWindow: number
 }
 
-export type NodeKind = 'metric' | 'formula' | 'note'
+export type NodeKind = 'metric' | 'formula'
 
 export function kindOf(n: TreeNode): NodeKind {
-  if (n.formula !== undefined) return 'formula'
-  if (n.metric) return 'metric'
-  return 'note'
+  return n.formula !== undefined ? 'formula' : 'metric'
 }
 
 /**
  * - formula / cost: generated from a formula's references (cost = subtracted term). Exact maths.
  * - driver: fitted by regression on history; propagates numbers in Scenario.
- * - influence, leading, correlation: qualitative context; never calculate.
+ * - influence: qualitative context; never calculates.
  */
-export type EdgeRole = 'formula' | 'cost' | 'driver' | 'influence' | 'leading' | 'correlation'
+export type EdgeRole = 'formula' | 'cost' | 'driver' | 'influence'
 
 export interface TreeEdge {
   id: string

@@ -1,6 +1,6 @@
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { clsx } from 'clsx'
-import { AlertCircle, Sigma, StickyNote, Target } from 'lucide-react'
+import { AlertCircle, Sigma, Target } from 'lucide-react'
 import { memo } from 'react'
 import { formatChange, formatValue } from '../../lib/format'
 import type { NodeResult } from '../../model/scenario'
@@ -44,7 +44,6 @@ function CardImpl({ data, selected }: NodeProps<CardNode>) {
       className={clsx(
         'w-[236px] rounded-xl border bg-surface text-left shadow-sm transition-shadow',
         kind === 'formula' && 'border-formula/40 bg-formula-soft/40',
-        kind === 'note' && 'border-dashed border-line bg-surface-2',
         kind === 'metric' && 'border-line',
         isOutcome && 'ring-2 ring-accent ring-offset-2 ring-offset-bg',
         selected && 'shadow-lg outline-2 outline-offset-2 outline-ink/60',
@@ -69,14 +68,8 @@ function CardImpl({ data, selected }: NodeProps<CardNode>) {
             </span>
           )}
           {kind === 'metric' && <span className="text-faint">Metric</span>}
-          {kind === 'note' && (
-            <span className="inline-flex items-center gap-1 text-faint">
-              <StickyNote className="size-3" />
-              Note
-            </span>
-          )}
           {issue && (
-            <span className="ml-auto text-down" title={issue}>
+            <span className="ml-auto text-down" title={issue} role="img" aria-label={`Problem: ${issue}`}>
               <AlertCircle className="size-3.5" />
             </span>
           )}
@@ -85,9 +78,7 @@ function CardImpl({ data, selected }: NodeProps<CardNode>) {
           {node.label || <span className="text-faint">Unnamed</span>}
         </div>
 
-        {kind === 'note' ? (
-          <p className="mt-1 line-clamp-4 text-xs text-muted">{node.note || 'Add context in the inspector.'}</p>
-        ) : series?.error ? (
+        {series?.error ? (
           <p className="mt-2 text-xs text-down">{series.error}</p>
         ) : scenario ? (
           <div className="mt-1">
