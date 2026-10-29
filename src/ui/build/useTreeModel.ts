@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { fitAll, type DriverFit } from '../../model/drivers'
 import { computeTreeSeries, resolveTable, summarize, type NodeSummary, type TreeSeries } from '../../tree/compute'
 import { validateTree, type Issue } from '../../tree/graph'
 import type { Tree } from '../../tree/types'
@@ -8,6 +9,8 @@ export interface TreeModel {
   series: TreeSeries
   summaries: Map<string, NodeSummary>
   issues: Issue[]
+  /** Regression fit for every card with model-driver inputs. */
+  models: Map<string, DriverFit>
   sourceLabel: (nodeId: string) => string | undefined
 }
 
@@ -21,6 +24,7 @@ export function useTreeModel(tree: Tree): TreeModel {
     const series = computeTreeSeries(tree, tables, links)
     const summaries = new Map(tree.nodes.map((n) => [n.id, summarize(series.byNode.get(n.id))]))
     const issues = validateTree(tree)
+    const models = fitAll(tree, series)
     const sourceLabel = (id: string) => {
       const n = tree.nodes.find((x) => x.id === id)
       if (!n?.metric) return undefined
@@ -28,7 +32,7 @@ export function useTreeModel(tree: Tree): TreeModel {
       const filters = n.metric.filters?.filter((f) => f.values.length).length
       return `${t?.name ?? n.metric.fileName} · ${n.metric.column} · ${n.metric.aggregation}${filters ? ` · ${filters} filter${filters > 1 ? 's' : ''}` : ''}`
     }
-    return { series, summaries, issues, sourceLabel }
+    return { series, summaries, issues, models, sourceLabel }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- calcKey captures every input that affects the maths
   }, [calcKey, tables, links])
 }

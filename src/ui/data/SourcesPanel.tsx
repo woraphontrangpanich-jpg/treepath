@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { FileSpreadsheet, Link2, Plus, Sheet, Trash2 } from 'lucide-react'
+import { FileSpreadsheet, Link2, Plus, Sheet, Sparkles, Trash2 } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { ACCEPTED_EXTENSIONS } from '../../data/parse'
 import type { Table } from '../../data/types'
@@ -36,6 +36,7 @@ export function SourcesPanel() {
   const selectedTableId = useStore((s) => s.selectedTableId)
   const dataView = useStore((s) => s.dataView)
   const { selectTable, setDataView, clearAll } = useStore.getState()
+  const { loadSamples } = useImport()
 
   const byFile = useMemo(() => {
     const m = new Map<string, Table[]>()
@@ -100,6 +101,10 @@ export function SourcesPanel() {
           <span className="flex-1">Table links</span>
           <span className="rounded-md bg-surface-2 px-1.5 text-xs text-muted ring-1 ring-line tabular">{links.length}</span>
         </button>
+        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => void loadSamples()} title="Re-import the bundled sample files">
+          <Sparkles className="size-3.5" />
+          Load sample data
+        </Button>
         <Button
           variant="danger"
           size="sm"

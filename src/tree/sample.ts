@@ -34,7 +34,11 @@ export function buildSampleTree(tables: Table[]): Tree | null {
     node('Cost per Order', 800, 340, { metric: bind(tables, 'sales.xlsx', 'Cost per Order') }),
     node('Orders', 520, 340, { metric: bind(tables, 'sales.xlsx', 'Orders') }),
     node('Gross Price', 0, 520, { metric: bind(tables, 'sales.xlsx', 'Gross Price') }),
-    node('Voucher Used Orders', 240, 520, { metric: bind(tables, 'sales.xlsx', 'Voucher Used Orders') }),
+    node('Voucher Used Orders', 240, 520, {
+      formula: '[Orders] * [Voucher Coverage] * [Voucher Take-up]',
+      metric: bind(tables, 'sales.xlsx', 'Voucher Used Orders'),
+    }),
+    node('Voucher Take-up', 240, 680, { metric: bind(tables, 'sales.xlsx', 'Voucher Take-up'), format: 'percent' }),
     node('Voucher Discount %', 480, 680, { metric: bind(tables, 'marketing.xlsx', 'voucher_discount_pct'), format: 'percent' }),
     node('Voucher Coverage', 240, 680, { metric: bind(tables, 'marketing.xlsx', 'voucher_coverage'), format: 'percent' }),
     node('Ad Spend', 800, 680, { metric: bind(tables, 'marketing.xlsx', 'ad_spend') }),
@@ -46,7 +50,6 @@ export function buildSampleTree(tables: Table[]): Tree | null {
     { id: newId('e'), source: byLabel('Ad Spend'), target: byLabel('Orders'), role: 'driver', lag: 1, expectedSign: 'positive' },
     { id: newId('e'), source: byLabel('Voucher Coverage'), target: byLabel('Orders'), role: 'driver', expectedSign: 'positive' },
     { id: newId('e'), source: byLabel('Rain Index'), target: byLabel('Orders'), role: 'driver', expectedSign: 'negative' },
-    { id: newId('e'), source: byLabel('Voucher Coverage'), target: byLabel('Voucher Used Orders'), role: 'leading' },
     { id: newId('e'), source: byLabel('Campaign calendar'), target: byLabel('Ad Spend'), role: 'influence' },
   ]
   const full: Tree = { ...tree, nodes, edges: manual, outcomeId: byLabel('Net Revenue') }

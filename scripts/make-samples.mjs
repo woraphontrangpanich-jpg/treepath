@@ -45,7 +45,7 @@ const campaigns = [
 ]
 
 const marketing = [['date', 'region_code', 'ad_spend', 'voucher_coverage', 'voucher_discount_pct']]
-const sales = [['Date', 'Region', 'Orders', 'Gross Price', 'Voucher Used Orders', 'Revenue', 'Cost per Order']]
+const sales = [['Date', 'Region', 'Orders', 'Gross Price', 'Voucher Used Orders', 'Voucher Take-up', 'Revenue', 'Cost per Order']]
 const weather = [['date', 'region_code', 'rain_index']]
 
 for (const r of regions) {
@@ -81,7 +81,7 @@ for (const r of regions) {
     const cpo = 4.5 + 0.15 * gauss()
 
     marketing.push([excelSerial(ms), r.code, round(ad, 0), round(coverage, 4), discount])
-    sales.push([excelSerial(ms), r.code, orders, round(price), voucherOrders, round(revenue), round(cpo)])
+    sales.push([excelSerial(ms), r.code, orders, round(price), voucherOrders, round(takeUp, 4), round(revenue), round(cpo)])
     weather.push([iso(ms), r.code, round(rain, 1)])
     prevAd = ad
   }
@@ -116,6 +116,7 @@ function formatColumn(ws, col, z, rows) {
   const wb = XLSX.utils.book_new()
   const ws = XLSX.utils.aoa_to_sheet(sales)
   formatColumn(ws, 0, 'dd/mm/yyyy', sales.length)
+  formatColumn(ws, 5, '0.0%', sales.length)
   XLSX.utils.book_append_sheet(wb, ws, 'Daily Sales')
   writeFileSync(join(outDir, 'sales.xlsx'), XLSX.write(wb, { type: "buffer", bookType: "xlsx", compression: true }))
 }

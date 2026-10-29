@@ -12,8 +12,10 @@ import {
   type NodeChange,
 } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ScenarioResult } from '../../model/scenario'
 import { useStore } from '../../state/store'
 import { useTrees, uniqueLabel } from '../../state/trees'
+import { NUMERIC_ROLES } from '../../tree/graph'
 import { ROLES } from '../../tree/roles'
 import { kindOf, type Tree } from '../../tree/types'
 import { Legend } from './Legend'
@@ -50,7 +52,9 @@ export function useAddFromPayload() {
   )
 }
 
-export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
+export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel; scenario?: ScenarioResult }) {
+  const readOnly = !!scenario
+  const onPath = scenario && scenario.path.length > 0 ? new Set(scenario.path) : null
   const selection = useTrees((s) => s.selection)
   const { select, moveNode, removeNodes, removeEdges, addEdge } = useTrees.getState()
   const notify = useStore((s) => s.notify)
@@ -77,10 +81,13 @@ export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
           summary: model.summaries.get(n.id)!,
           isOutcome: tree.outcomeId === n.id,
           issue: issueByNode.get(n.id),
-          source: kindOf(n) === 'metric' ? model.sourceLabel(n.id) : undefined,
+          source: kindOf(n) === 'metric' && !scenario ? model.sourceLabel(n.id) : undefined,
+          scenario: scenario?.nodes.get(n.id),
+          dimmed: !!onPath && !onPath.has(n.id),
         },
       })),
-    [tree.nodes, tree.outcomeId, selection, model, issueByNode],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onPath derives from scenario
+    [tree.nodes, tree.outcomeId, selection, model, issueByNode, scenario],
   )
 
   // Local copy so React Flow keeps measured sizes and smooth drags; positions are committed on drag end.
@@ -103,10 +110,11 @@ export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
         target: e.target,
         type: 'role',
         selected: selection?.kind === 'edge' && selection.id === e.id,
-        deletable: !ROLES[e.role].derived,
-        data: { edge: e },
+        deletable: !readOnly && !ROLES[e.role].derived,
+        data: { edge: e, dimmed: !!onPath && !(NUMERIC_ROLES.has(e.role) && onPath.has(e.source) && onPath.has(e.target)) },
       })),
-    [tree.edges, selection],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onPath derives from scenario
+    [tree.edges, selection, scenario, readOnly],
   )
 
   const onNodesChange = useCallback(
@@ -169,7 +177,8 @@ export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
+      onConnect={readOnly ? undefined : onConnect}
+      nodesConnectable={!readOnly}
       onPaneClick={() => select(null)}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes(DND_MIME)) {
@@ -177,12 +186,12 @@ export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
           e.dataTransfer.dropEffect = 'copy'
         }
       }}
-      onDrop={onDrop}
+      onDrop={readOnly ? undefined : onDrop}
       fitView
       fitViewOptions={{ padding: 0.15 }}
       minZoom={0.15}
       maxZoom={2}
-      deleteKeyCode={['Backspace', 'Delete']}
+      deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
       connectionRadius={28}
     >
       <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="var(--line)" />
@@ -191,7 +200,7 @@ export function Canvas({ tree, model }: { tree: Tree; model: TreeModel }) {
       <Panel position="top-right">
         <Legend />
       </Panel>
-      {tree.nodes.length === 0 && (
+      {tree.nodes.length === 0 && !readOnly && (
         <Panel position="top-center" className="!mt-24">
           <div className="max-w-sm rounded-2xl border border-dashed border-line bg-surface/90 p-6 text-center">
             <p className="font-semibold">Empty tree</p>

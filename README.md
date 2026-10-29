@@ -7,7 +7,7 @@ tree of how your metrics relate (formulas and drivers), and estimate what happen
 when an input like Ad Spend changes. Formulas are evaluated exactly; driver links use linear regression
 fitted on your history. **No server: your files never leave your browser.**
 
-> Status: Phases 1–2 of 6 (data import, table links, tree builder) are done. See [PLAN.md](PLAN.md) for the roadmap.
+> Status: data import, table links, the tree builder, regression (Analyze) and Scenario forecasting are done; Text Build and final polish remain. See [PLAN.md](PLAN.md).
 
 ## Quick start
 
@@ -44,6 +44,25 @@ Open http://localhost:5173 and click **Try sample data**, or drop your own `.xls
   - ELK auto-layout (inputs below, outcome on top), a legend, a minimap, multiple trees, and export/import as
     `.treepath.json` (bindings only, never your data rows).
   - A ready-made **Net Revenue sample tree** for the sample data.
+- **Analyze tab:** every card with model-driver inputs is fitted with multivariable OLS.
+  - *Change* models (default) regress period-over-period changes on ln / logit / raw scales, chosen per series,
+    which reads as elasticity. *Level* models use raw values.
+  - Coefficient ± 95% CI, p-value, VIF, an expected-direction check, a lag scan (correlation at lags 0–7 with
+    one-click "use lag"), walk-forward out-of-sample R², direction hit rate, and an actual-vs-fitted chart.
+  - Plain-English readings, e.g. "A 10% rise in Ad Spend goes with +3.98% Orders 1 day later".
+- **Scenario tab:** change inputs and follow the effect to the outcome.
+  - Type it ("increase Ad Spend 20%", "set Voucher Coverage to 15%", "reduce Cost per Order by 0.5"), or use
+    per-input controls (change by % / add / set to). Model estimates can be overridden.
+  - Changes propagate in calculation order: exact formulas, then fitted drivers at steady state.
+    An unchanged input always returns the baseline exactly.
+  - Shows the outcome baseline → scenario, change, a **P5–P95 range** from 400 Monte-Carlo draws of the fitted
+    coefficients, and the evidence type.
+  - **What drove the change:** each input's own effect plus any interaction, adding up exactly to the
+    total, and the changed path card by card.
+  - **How it was calculated:** every formula with baseline and scenario numbers substituted, and every model
+    step (e.g. `ln(12.6K) − ln(10.5K) = 0.18232 × 0.4092`).
+  - The canvas highlights the path (green up, red down; tint shows size) and dims everything else.
+  - Multiple named scenarios per tree, with a comparison table. The baseline is the average of the last N periods.
 - **Local persistence** in IndexedDB, and a light/dark theme.
 
 ## Scripts

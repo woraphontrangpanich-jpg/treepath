@@ -30,6 +30,31 @@ export interface TreeNode {
   /** Free text: a note node when neither metric nor formula is set. */
   note?: string
   format?: NodeFormat
+  /** How model-driver inputs are fitted when this card is a regression target. Defaults to 'change'. */
+  modelType?: ModelType
+}
+
+/**
+ * - change: period-over-period change on a log/logit scale (elasticity-style, robust to trends)
+ * - level: raw values (target = a + b·driver)
+ */
+export type ModelType = 'change' | 'level'
+
+export type AdjustmentKind = 'pct' | 'add' | 'set'
+
+/** One scenario assumption: change an input card by a percentage, by an amount, or set it to a value. */
+export interface Assumption {
+  nodeId: string
+  kind: AdjustmentKind
+  value: number
+}
+
+export interface Scenario {
+  id: string
+  name: string
+  assumptions: Assumption[]
+  /** Baseline = average of the last N periods. */
+  baselineWindow: number
 }
 
 export type NodeKind = 'metric' | 'formula' | 'note'
@@ -67,6 +92,8 @@ export interface Tree {
   edges: TreeEdge[]
   outcomeId?: string
   grain: Grain
+  scenarios?: Scenario[]
+  activeScenarioId?: string
   createdAt: string
   updatedAt: string
 }

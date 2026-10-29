@@ -4,7 +4,7 @@ import type { Grain } from '../data/types'
 import { renameRef } from '../tree/formula'
 import { newId, syncFormulaEdges } from '../tree/graph'
 import { emptyTree } from '../tree/sample'
-import { TREE_FILE_VERSION, type Tree, type TreeEdge, type TreeFile, type TreeNode } from '../tree/types'
+import { TREE_FILE_VERSION, type Assumption, type Scenario, type Tree, type TreeEdge, type TreeFile, type TreeNode } from '../tree/types'
 
 export type Selection = { kind: 'node'; id: string } | { kind: 'edge'; id: string } | null
 
@@ -33,6 +33,25 @@ interface TreeState {
   select: (s: Selection) => void
   toggleLegend: () => void
   importTree: (file: TreeFile) => void
+
+  /** Make sure the active tree has a scenario selected; returns it. */
+  ensureScenario: () => void
+  setAssumption: (nodeId: string, a: Omit<Assumption, 'nodeId'> | null) => void
+  clearAssumptions: () => void
+  addScenario: (copyCurrent?: boolean) => void
+  selectScenario: (id: string) => void
+  renameScenario: (name: string) => void
+  deleteScenario: (id: string) => void
+  setBaselineWindow: (n: number) => void
+}
+
+export function defaultWindow(grain: Tree['grain']) {
+  return grain === 'day' ? 28 : grain === 'week' ? 4 : 3
+}
+
+export function activeScenario(tree: Tree | null): Scenario | null {
+  if (!tree?.scenarios?.length) return null
+  return tree.scenarios.find((s) => s.id === tree.activeScenarioId) ?? tree.scenarios[0]
 }
 
 export function activeTree(s: Pick<TreeState, 'trees' | 'activeId'>) {
@@ -133,6 +152,51 @@ export const useTrees = create<TreeState>((setState, getState) => {
     setOutcome: (outcomeId) => mutate((t) => ({ ...t, outcomeId })),
     select: (selection) => setState({ selection }),
     toggleLegend: () => setState((s) => ({ showLegend: !s.showLegend })),
+
+    ensureScenario: () =>
+      mutate((t) => {
+        if (t.scenarios?.length) return t.activeScenarioId ? t : { ...t, activeScenarioId: t.scenarios[0].id }
+        const s: Scenario = { id: newId('s'), name: 'My scenario', assumptions: [], baselineWindow: defaultWindow(t.grain) }
+        return { ...t, scenarios: [s], activeScenarioId: s.id }
+      }),
+    setAssumption: (nodeId, a) =>
+      mutate((t) => {
+        const cur = activeScenario(t)
+        if (!cur) return t
+        const rest = cur.assumptions.filter((x) => x.nodeId !== nodeId)
+        const next = { ...cur, assumptions: a ? [...rest, { ...a, nodeId }] : rest }
+        return { ...t, scenarios: t.scenarios!.map((s) => (s.id === cur.id ? next : s)) }
+      }),
+    clearAssumptions: () =>
+      mutate((t) => {
+        const cur = activeScenario(t)
+        return cur ? { ...t, scenarios: t.scenarios!.map((s) => (s.id === cur.id ? { ...s, assumptions: [] } : s)) } : t
+      }),
+    addScenario: (copyCurrent) =>
+      mutate((t) => {
+        const cur = activeScenario(t)
+        const n = (t.scenarios?.length ?? 0) + 1
+        const s: Scenario = copyCurrent && cur
+          ? { ...structuredClone(cur), id: newId('s'), name: `${cur.name} (copy)` }
+          : { id: newId('s'), name: `Scenario ${n}`, assumptions: [], baselineWindow: cur?.baselineWindow ?? defaultWindow(t.grain) }
+        return { ...t, scenarios: [...(t.scenarios ?? []), s], activeScenarioId: s.id }
+      }),
+    selectScenario: (id) => mutate((t) => ({ ...t, activeScenarioId: id })),
+    renameScenario: (name) =>
+      mutate((t) => {
+        const cur = activeScenario(t)
+        return cur ? { ...t, scenarios: t.scenarios!.map((s) => (s.id === cur.id ? { ...s, name } : s)) } : t
+      }),
+    deleteScenario: (id) =>
+      mutate((t) => {
+        const scenarios = (t.scenarios ?? []).filter((s) => s.id !== id)
+        return { ...t, scenarios, activeScenarioId: t.activeScenarioId === id ? scenarios[0]?.id : t.activeScenarioId }
+      }),
+    setBaselineWindow: (n) =>
+      mutate((t) => {
+        const cur = activeScenario(t)
+        return cur ? { ...t, scenarios: t.scenarios!.map((s) => (s.id === cur.id ? { ...s, baselineWindow: n } : s)) } : t
+      }),
 
     importTree: (file) => {
       const now = new Date().toISOString()

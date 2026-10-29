@@ -1,37 +1,11 @@
 import { clsx } from 'clsx'
-import { FlaskConical, GitBranch, LineChart, Loader2, X } from 'lucide-react'
-import { useStore, type Workspace } from './state/store'
+import { Loader2, X } from 'lucide-react'
+import { useStore } from './state/store'
+import { AnalyzeWorkspace } from './ui/analyze/AnalyzeWorkspace'
 import { BuildWorkspace } from './ui/build/BuildWorkspace'
 import { DataWorkspace } from './ui/data/DataWorkspace'
+import { ScenarioWorkspace } from './ui/scenario/ScenarioWorkspace'
 import { TopBar } from './ui/TopBar'
-
-const UPCOMING: Record<Exclude<Workspace, 'data' | 'build'>, { icon: typeof GitBranch; title: string; text: string }> = {
-  analyze: {
-    icon: LineChart,
-    title: 'Analyze — coming in phase 4',
-    text: 'Trends, correlations and fitted regression models for every driver link, with diagnostics.',
-  },
-  scenario: {
-    icon: FlaskConical,
-    title: 'Scenario — coming in phase 5',
-    text: 'Change an input ("increase Ad Spend 20%") and follow the impact through the tree to your outcome, with a confidence range.',
-  },
-}
-
-function Upcoming({ workspace }: { workspace: Exclude<Workspace, 'data' | 'build'> }) {
-  const u = UPCOMING[workspace]
-  return (
-    <div className="grid flex-1 place-items-center p-8">
-      <div className="max-w-md text-center">
-        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-accent-soft text-accent">
-          <u.icon className="size-6" />
-        </span>
-        <h2 className="mt-4 text-xl font-semibold">{u.title}</h2>
-        <p className="mt-2 text-sm text-muted">{u.text}</p>
-      </div>
-    </div>
-  )
-}
 
 function Notices() {
   const notices = useStore((s) => s.notices)
@@ -77,8 +51,10 @@ export default function App() {
         <DataWorkspace />
       ) : workspace === 'build' ? (
         <BuildWorkspace />
+      ) : workspace === 'analyze' ? (
+        <AnalyzeWorkspace />
       ) : (
-        <Upcoming workspace={workspace} />
+        <ScenarioWorkspace />
       )}
       <Notices />
     </div>
