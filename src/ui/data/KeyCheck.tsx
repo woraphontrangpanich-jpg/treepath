@@ -38,9 +38,7 @@ export function KeyCheck({ tables, links }: { tables: Table[]; links: Link[] }) 
 
   return (
     <section>
-      <SectionTitle aside={<span className="text-xs text-faint">What Build and Forecast use when you match rows by a key</span>}>
-        Check Matched Keys
-      </SectionTitle>
+      <SectionTitle aside={<span className="text-xs text-faint">Rows in each file for every key value</span>}>Matching rows</SectionTitle>
       <div className="rounded-xl border border-line bg-surface">
         <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
           <label className="flex items-center gap-2 text-sm">

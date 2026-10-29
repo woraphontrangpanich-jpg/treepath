@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { AlertTriangle, Calendar, Hash, Info, KeyRound, ToggleLeft, Trash2, Type } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Calendar, Hash, Info, KeyRound, ToggleLeft, Trash2, Type } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { aggregateSeries, tableHealth } from '../../data/series'
 import type { Aggregation, Column, ColumnRole, ColumnType, Table } from '../../data/types'
@@ -18,14 +18,14 @@ const TYPE_ICON: Record<ColumnType, typeof Hash> = {
 
 const ROLE_LABEL: Record<ColumnRole, string> = {
   date: 'Date',
-  key: 'Category / ID',
-  metric: 'Metric',
-  dimension: 'Category / ID',
-  ignore: 'Ignore',
+  key: 'ID or group',
+  metric: 'Number to track',
+  dimension: 'ID or group',
+  ignore: 'Don’t use',
 }
 
 const AGG_LABEL: Record<Aggregation, string> = {
-  sum: 'Sum',
+  sum: 'Add up',
   avg: 'Average',
   count: 'Count rows',
   min: 'Min',
@@ -41,12 +41,19 @@ function rolesFor(type: ColumnType): ColumnRole[] {
 }
 
 export function TableView({ table }: { table: Table }) {
-  const { renameTable, removeTable } = useStore.getState()
+  const { renameTable, removeTable, setDataView } = useStore.getState()
   const health = useMemo(() => tableHealth(table).filter((h) => h.level !== 'ok'), [table])
   const dateCol = table.columns.find((c) => c.role === 'date')
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-6">
+      <button
+        type="button"
+        onClick={() => setDataView('links')}
+        className="press -mb-4 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-medium text-accent hover:bg-accent-soft"
+      >
+        <ArrowLeft className="size-4" /> All files
+      </button>
       <header className="flex flex-wrap items-start gap-4">
         <div className="min-w-0 flex-1">
           <input
@@ -71,9 +78,16 @@ export function TableView({ table }: { table: Table }) {
             )}
           </p>
         </div>
-        <Button variant="danger" onClick={() => confirm(`Remove “${table.name}” and its links?`) && removeTable(table.id)}>
+        <Button
+          variant="danger"
+          onClick={() => {
+            if (!confirm(`Remove “${table.name}” and its connections?`)) return
+            removeTable(table.id)
+            setDataView('links')
+          }}
+        >
           <Trash2 className="size-4" />
-          Remove
+          Remove file
         </Button>
       </header>
 
@@ -104,7 +118,7 @@ function ColumnMapping({ table }: { table: Table }) {
   const updateColumn = useStore((s) => s.updateColumn)
   return (
     <section>
-      <SectionTitle aside={<span className="text-xs text-faint">Detected automatically. Change anything that looks wrong.</span>}>
+      <SectionTitle aside={<span className="text-xs text-faint">Treepath guessed these. Change any that look wrong.</span>}>
         Columns
       </SectionTitle>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
@@ -112,8 +126,8 @@ function ColumnMapping({ table }: { table: Table }) {
           <thead>
             <tr className="border-b border-line text-left text-xs text-muted">
               <th className="px-4 py-2.5 font-medium">Column</th>
-              <th className="px-3 py-2.5 font-medium">Use as</th>
-              <th className="px-3 py-2.5 font-medium">Combine rows by</th>
+              <th className="px-3 py-2.5 font-medium">What it is</th>
+              <th className="px-3 py-2.5 font-medium">Many rows on one day</th>
               <th className="px-3 py-2.5 font-medium">Values</th>
               <th className="px-3 py-2.5 font-medium">Monthly trend</th>
             </tr>

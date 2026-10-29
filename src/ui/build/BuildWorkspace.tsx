@@ -70,7 +70,7 @@ function TreeMenu({ tree }: { tree: Tree }) {
         <ChevronDown className="size-3.5 text-faint" />
       </Button>
       {open && (
-        <div className="popover absolute top-full left-0 z-30 mt-1.5 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-[0_16px_40px_-16px_rgb(23_35_56/0.4)]">
+        <div className="popover absolute top-full left-0 z-30 mt-1.5 w-72 rounded-xl border border-line bg-surface p-1.5 shadow-[0_16px_40px_-16px_rgb(17_42_51/0.4)]">
           <div className="max-h-60 overflow-y-auto">
             {trees.map((t) => (
               <button key={t.id} type="button" onClick={act(() => openTree(t.id))} className={clsx(item, t.id === tree.id && 'bg-accent-soft')}>
@@ -225,7 +225,7 @@ export function StartTree() {
             <Sparkles className="size-5 text-accent" />
             <div className="mt-3 font-semibold">Net Revenue sample</div>
             <p className="mt-1 text-sm text-muted">
-              {sample ? 'A finished tree on the sample data: formulas, costs and effects learned from history.' : 'Load the sample data in the Data tab first.'}
+              {sample ? 'A finished tree on the sample data: formulas, costs and effects learned from history.' : 'Add the sample files on the Files page first.'}
             </p>
           </button>
           <button type="button" onClick={() => newTree()} className="rounded-2xl border border-line bg-surface p-5 text-left hover:border-accent">

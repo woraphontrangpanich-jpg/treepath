@@ -25,7 +25,7 @@ interface State {
   hydrated: boolean
   tables: Table[]
   links: Link[]
-  /** Where each file sits on the Table Links canvas; files not listed aren't on it. */
+  /** Where each file sits on the Files canvas; files not listed aren't on it. */
   linkLayout: Record<string, { x: number; y: number }>
   workspace: Workspace
   dataView: DataView
@@ -64,7 +64,7 @@ export const useStore = create<State>((setState, getState) => ({
   links: [],
   linkLayout: {},
   workspace: workspaceFromHash(),
-  dataView: 'table',
+  dataView: 'links',
   selectedTableId: null,
   busy: null,
   notices: [],
@@ -90,8 +90,8 @@ export const useStore = create<State>((setState, getState) => ({
       const has = (r: Link['from']) => tables.some((t) => t.id === r.tableId && t.columns.some((c) => c.name === r.column))
       const links = s.links.filter((l) => has(l.from) && has(l.to))
       if (links.length < s.links.length)
-        setTimeout(() => getState().notify('info', `Removed ${s.links.length - links.length} link(s) to columns that no longer exist. Check Table Links.`), 0)
-      return { tables, links, selectedTableId: firstNew?.id ?? s.selectedTableId, dataView: 'table' }
+        setTimeout(() => getState().notify('info', `Removed ${s.links.length - links.length} connection(s) to columns that no longer exist. Check Files.`), 0)
+      return { tables, links, selectedTableId: firstNew?.id ?? s.selectedTableId, dataView: 'links' }
     }),
 
   removeTable: (id) =>

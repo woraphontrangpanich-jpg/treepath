@@ -239,7 +239,7 @@ function OutcomeEstimate({ tree, result, fmtOf }: { tree: Tree; result: Scenario
   }[result.evidence]
   return (
     <Section n={2} title="Outcome estimate" aside={`per ${tree.grain}`}>
-      <div className="rounded-[20px] bg-ink p-5 text-bg shadow-[0_18px_40px_-24px_rgb(23_35_56/0.7)]">
+      <div className="rounded-[20px] bg-ink p-5 text-bg shadow-[0_18px_40px_-24px_rgb(17_42_51/0.7)]">
         <div className="flex items-baseline justify-between gap-3">
           <span className="text-[13px] font-medium text-bg/70">{outcomeNode.label}</span>
           {o.affected && (

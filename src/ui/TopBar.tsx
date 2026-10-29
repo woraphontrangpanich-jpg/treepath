@@ -23,7 +23,7 @@ function ThemeToggle() {
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = next
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0e1726' : '#eef2ec')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#0b1a20' : '#eef5f4')
     try {
       localStorage.setItem('treepath:theme', next)
     } catch {
@@ -44,7 +44,7 @@ function ThemeToggle() {
 }
 
 const STEPS: { value: Workspace; label: string }[] = [
-  { value: 'data', label: 'Data' },
+  { value: 'data', label: 'Files' },
   { value: 'build', label: 'Build' },
   { value: 'scenario', label: 'Forecast' },
 ]
@@ -52,7 +52,7 @@ const STEP_W = 128
 
 /**
  * The three screens really are a sequence, so they read as a trail: stations joined by a line,
- * the travelled part drawn in cobalt, and a marker that slides to the current station.
+ * the travelled part drawn in teal, and a marker that slides to the current station.
  */
 function StepTrail() {
   const workspace = useStore((s) => s.workspace)

@@ -614,7 +614,7 @@ function MatchKeySection({ tree, model }: { tree: Tree; model: TreeModel }) {
     <Section title="Learn Effects By">
       {candidates.length === 0 ? (
         <p className="text-xs text-muted">
-          Link your files by their shared key first, in{' '}
+          Connect your files by a shared ID first, on the{' '}
           <button
             type="button"
             className="text-accent underline-offset-2 hover:underline"
@@ -623,7 +623,7 @@ function MatchKeySection({ tree, model }: { tree: Tree; model: TreeModel }) {
               setDataView('links')
             }}
           >
-            Data › Table Links
+            Files page
           </button>
           .
         </p>

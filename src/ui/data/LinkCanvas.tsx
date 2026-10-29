@@ -19,26 +19,40 @@ import {
   type NodeProps,
 } from '@xyflow/react'
 import { clsx } from 'clsx'
-import { Calendar, FileSpreadsheet, Hash, KeyRound, LayoutDashboard, Plus, Sparkles, Trash2, X } from 'lucide-react'
+import { Calendar, ChevronRight, FileSpreadsheet, Hash, KeyRound, LayoutDashboard, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { hasLink, linkStats, orientLink, suggestLinks, type LinkStats } from '../../data/links'
 import type { Column, ColumnRef, Link, Table } from '../../data/types'
 import { useStore } from '../../state/store'
 import { Button } from '../primitives'
 
-export const TABLE_MIME = 'application/x-treepath-table'
 const NODE_W = 260
 const GAP_X = 170
 
+const ROW_H = 200
+
 /**
- * A spot for a file joining the canvas: data files stack in the left column, lookup lists
- * (files that are only ever linked *to*) in the right one, so links run left to right.
+ * Lay every file out: lookup lists (files that are only ever linked *to*) in the middle column,
+ * the other files alternating left and right of them, so every link is short and nothing overlaps.
  */
-export function nextSpot(layout: Record<string, { x: number; y: number }>, links: Link[], tableId: string) {
-  const isLookup = links.some((l) => l.to.tableId === tableId) && !links.some((l) => l.from.tableId === tableId)
-  const x = isLookup ? NODE_W + GAP_X : 0
-  const below = Object.values(layout).filter((p) => Math.abs(p.x - x) < NODE_W)
-  return { x, y: below.length ? Math.max(...below.map((p) => p.y)) + 190 : 0 }
+export function layoutFiles(tables: Table[], links: Link[]): Record<string, { x: number; y: number }> {
+  const isLookup = (id: string) => links.some((l) => l.to.tableId === id) && !links.some((l) => l.from.tableId === id)
+  const lookups = tables.filter((t) => isLookup(t.id))
+  // Linked data files first, so they sit nearest the top beside the lookups.
+  const others = tables
+    .filter((t) => !isLookup(t.id))
+    .sort((a, b) => Number(links.some((l) => l.from.tableId === b.id)) - Number(links.some((l) => l.from.tableId === a.id)))
+  const out: Record<string, { x: number; y: number }> = {}
+  const step = NODE_W + GAP_X
+  if (lookups.length === 0) {
+    others.forEach((t, i) => (out[t.id] = { x: (i % 3) * step, y: Math.floor(i / 3) * ROW_H }))
+    return out
+  }
+  const sideRows = Math.ceil(others.length / 2)
+  const top = Math.max(0, ((sideRows - lookups.length) * ROW_H) / 2)
+  lookups.forEach((t, i) => (out[t.id] = { x: step, y: top + i * ROW_H }))
+  others.forEach((t, i) => (out[t.id] = { x: i % 2 === 0 ? 0 : 2 * step, y: Math.floor(i / 2) * ROW_H }))
+  return out
 }
 
 /** Columns you'd join on: IDs and categories. Dates and numbers are summarised instead. */
@@ -51,9 +65,15 @@ type TableData = {
   /** Column → number of links touching it. */
   linkCount: Map<string, number>
   onPick: PickFn
-  onRemove: (id: string) => void
+  onOpen: (id: string) => void
 }
 type TableNode = Node<TableData, 'table'>
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+function monthLabel(v: unknown) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(v))
+  return m ? `${MONTHS[Number(m[2]) - 1]} ${m[1]}` : String(v)
+}
 
 function sample(c: Column) {
   return c.profile.samples
@@ -108,30 +128,33 @@ function TableCardImpl({ data, selected }: NodeProps<TableNode>) {
   const [showAll, setShowAll] = useState(false)
   const keys = table.columns.filter(linkable)
   const rest = table.columns.filter((c) => !linkable(c) && c.role !== 'ignore')
+  const date = table.columns.find((c) => c.role === 'date')
+  const span = date && date.profile.min !== null ? `, ${monthLabel(date.profile.min)} to ${monthLabel(date.profile.max)}` : ''
   return (
     <div
-      className={clsx('rounded-xl border bg-surface shadow-[0_8px_24px_-16px_rgb(23_35_56/0.5)]', selected ? 'border-accent' : 'border-line')}
+      className={clsx('rounded-xl border bg-surface shadow-[0_8px_24px_-16px_rgb(17_42_51/0.5)]', selected ? 'border-accent' : 'border-line')}
       style={{ width: NODE_W }}
     >
-      <div className="flex items-center gap-2 rounded-t-xl border-b border-line bg-surface-2 px-3 py-2">
-        <FileSpreadsheet className="size-4 shrink-0 text-accent" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-semibold" title={table.name}>
-            {table.name}
-          </div>
-          <div className="text-[11px] text-muted tabular">{table.rows.length.toLocaleString()} rows</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => data.onRemove(table.id)}
-          className="nodrag press grid size-6 place-items-center rounded-full text-faint hover:bg-down-soft hover:text-down"
-          aria-label={`Remove ${table.name} from the canvas`}
-          title="Remove from canvas (and its links)"
-        >
-          <X className="size-3.5" />
-        </button>
-      </div>
-      {keys.length === 0 && !showAll && <p className="px-3 py-2 text-[11.5px] text-muted">No ID columns found.</p>}
+      <button
+        type="button"
+        onClick={() => data.onOpen(table.id)}
+        title="See this file's data and settings"
+        className="nodrag group flex w-full items-center gap-2.5 rounded-t-xl border-b border-line bg-surface-2 px-3 py-2.5 text-left hover:bg-accent-soft"
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-ink">
+          <FileSpreadsheet className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13.5px] font-semibold">{table.name}</span>
+          <span className="block truncate text-[11px] text-muted tabular">
+            {table.rows.length.toLocaleString()} rows{span}
+          </span>
+        </span>
+        <span className="flex items-center gap-0.5 text-[11.5px] font-medium text-accent opacity-70 group-hover:opacity-100">
+          Open <ChevronRight className="size-3.5" />
+        </span>
+      </button>
+      {keys.length === 0 && !showAll && <p className="px-3 py-2 text-[11.5px] text-muted">No ID columns to connect.</p>}
       {keys.map((c) => (
         <ColumnRow key={c.name} table={table} col={c} data={data} />
       ))}
@@ -140,9 +163,9 @@ function TableCardImpl({ data, selected }: NodeProps<TableNode>) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="nodrag block w-full rounded-b-xl border-t border-line px-3 py-1.5 text-left text-[11px] text-muted hover:bg-surface-2 hover:text-ink"
+          className="nodrag block w-full truncate rounded-b-xl border-t border-line px-3 py-1.5 text-left text-[11px] text-muted hover:bg-surface-2 hover:text-ink"
         >
-          {showAll ? 'Show ID columns only' : `+ ${rest.length} more column${rest.length === 1 ? '' : 's'} (dates, numbers)`}
+          {showAll ? 'Show fewer columns' : `Also has ${rest.map((c) => c.name).join(', ')}`}
         </button>
       )}
     </div>
@@ -225,7 +248,7 @@ function LinkDetails({ link, tables, onClose }: { link: Link; tables: Table[]; o
   const name = (r: ColumnRef) => tables.find((t) => t.id === r.tableId)?.name ?? '?'
   const tone = matchTone(stats)
   return (
-    <div className="popover w-80 rounded-xl border border-line bg-surface p-4 shadow-[0_18px_40px_-22px_rgb(23_35_56/0.55)]">
+    <div className="popover w-80 rounded-xl border border-line bg-surface p-4 shadow-[0_18px_40px_-22px_rgb(17_42_51/0.55)]">
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1 text-sm">
           <div className="truncate">
@@ -285,20 +308,15 @@ export function LinkCanvas() {
   const tables = useStore((s) => s.tables)
   const links = useStore((s) => s.links)
   const layout = useStore((s) => s.linkLayout)
-  const { placeTable, unplaceTable, addLink, notify } = useStore.getState()
-  const { screenToFlowPosition, fitView } = useReactFlow()
+  const { placeTable, addLink, notify } = useStore.getState()
+  const { fitView } = useReactFlow()
   const [pending, setPending] = useState<ColumnRef | null>(null)
   const [selectedLink, setSelectedLink] = useState<string | null>(null)
 
-  // Files in a link are always on the canvas; give any without a spot one in a simple grid.
+  // Every file is on the canvas. When new files arrive, lay them all out again so they fit together.
   useEffect(() => {
-    const linked = new Set(links.flatMap((l) => [l.from.tableId, l.to.tableId]))
-    const missing = tables.filter((t) => linked.has(t.id) && !layout[t.id])
-    if (!missing.length) return
-    // Data files first so the lookups line up beside them.
-    const order = [...missing].sort((a, b) => Number(links.some((l) => l.from.tableId === b.id)) - Number(links.some((l) => l.from.tableId === a.id)))
-    for (const t of order) placeTable(t.id, nextSpot(useStore.getState().linkLayout, links, t.id))
-  }, [links, tables, layout, placeTable])
+    if (tables.some((t) => !layout[t.id])) useStore.setState({ linkLayout: layoutFiles(tables, links) })
+  }, [links, tables, layout])
 
   const connect = useCallback(
     (a: ColumnRef, b: ColumnRef) => {
@@ -328,7 +346,7 @@ export function LinkCanvas() {
     [connect],
   )
 
-  const onRemove = useCallback((id: string) => unplaceTable(id), [unplaceTable])
+  const onOpen = useCallback((id: string) => useStore.getState().selectTable(id), [])
 
   const onCanvas = useMemo(() => tables.filter((t) => layout[t.id]), [tables, layout])
   // Re-frame whenever a file joins (dragged, clicked in the list, or placed for a new link).
@@ -343,9 +361,9 @@ export function LinkCanvas() {
         const linkCount = new Map<string, number>()
         for (const l of links)
           for (const r of [l.from, l.to]) if (r.tableId === t.id) linkCount.set(r.column, (linkCount.get(r.column) ?? 0) + 1)
-        return { id: t.id, type: 'table', position: layout[t.id], data: { table: t, pending, linkCount, onPick, onRemove } }
+        return { id: t.id, type: 'table', position: layout[t.id], data: { table: t, pending, linkCount, onPick, onOpen } }
       }),
-    [onCanvas, links, layout, pending, onPick, onRemove],
+    [onCanvas, links, layout, pending, onPick, onOpen],
   )
   const [nodes, setNodes] = useState<TableNode[]>(built)
   useEffect(() => {
@@ -405,22 +423,13 @@ export function LinkCanvas() {
     [connect],
   )
 
-  const addAll = () => {
-    for (const t of tables) if (!useStore.getState().linkLayout[t.id]) placeTable(t.id, nextSpot(useStore.getState().linkLayout, links, t.id))
-  }
-
-  // Lay every file out again from scratch: data files left, lookups right.
+  // Lay every file out again from scratch: lookups in the middle, data files around them.
   const tidy = () => {
-    const ids = onCanvas.map((t) => t.id)
-    const order = [...ids].sort((a, b) => Number(links.some((l) => l.from.tableId === b)) - Number(links.some((l) => l.from.tableId === a)))
-    const next: Record<string, { x: number; y: number }> = {}
-    for (const id of order) next[id] = nextSpot(next, links, id)
-    useStore.setState({ linkLayout: next })
+    useStore.setState({ linkLayout: layoutFiles(tables, links) })
     setTimeout(() => void fitView({ padding: 0.2, maxZoom: 1, duration: 300 }), 120)
   }
 
   const link = links.find((l) => l.id === selectedLink)
-  const hidden = suggestions.filter((s) => !layout[s.from.tableId] || !layout[s.to.tableId])
 
   return (
     <ReactFlow<TableNode, LinkFlowEdge>
@@ -437,19 +446,6 @@ export function LinkCanvas() {
         setSelectedLink(null)
       }}
       onEdgesDelete={(es) => es.forEach((e) => useStore.getState().removeLink(e.id))}
-      onDragOver={(e) => {
-        if (e.dataTransfer.types.includes(TABLE_MIME)) {
-          e.preventDefault()
-          e.dataTransfer.dropEffect = 'copy'
-        }
-      }}
-      onDrop={(e) => {
-        const id = e.dataTransfer.getData(TABLE_MIME)
-        if (!id) return
-        e.preventDefault()
-        const p = screenToFlowPosition({ x: e.clientX, y: e.clientY })
-        placeTable(id, { x: p.x - NODE_W / 2, y: p.y - 20 })
-      }}
       onKeyDown={(e) => e.key === 'Escape' && setPending(null)}
       fitView
       fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
@@ -482,36 +478,22 @@ export function LinkCanvas() {
           <LinkDetails link={link} tables={tables} onClose={() => setSelectedLink(null)} />
         </Panel>
       )}
-      {!link && hidden.length > 0 && onCanvas.length > 0 && (
+      {!link && suggestions.length > 0 && (
         <Panel position="top-right">
           <button
             type="button"
-            onClick={() => hidden.forEach((s) => addLink({ from: s.from, to: s.to }))}
-            className="press flex items-center gap-1.5 rounded-full border border-dashed border-accent bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-accent hover:bg-accent-soft"
+            onClick={() => suggestions.forEach((x) => addLink({ from: x.from, to: x.to }))}
+            className="press flex items-center gap-1.5 rounded-full bg-pop px-3.5 py-1.5 text-[12.5px] font-semibold text-pop-ink shadow-sm hover:brightness-105"
           >
-            <Sparkles className="size-3.5" /> Add {hidden.length} suggested link{hidden.length === 1 ? '' : 's'}
+            <Sparkles className="size-3.5" /> Connect {suggestions.length} matching column{suggestions.length === 1 ? '' : 's'} for me
           </button>
         </Panel>
       )}
-      {onCanvas.length === 0 && (
-        <Panel position="top-center" className="!mt-24">
-          <div className="max-w-sm rounded-2xl border border-dashed border-line bg-surface/95 p-6 text-center">
-            <p className="font-semibold">Drag files here</p>
-            <p className="mt-1 text-sm text-muted">
-              Drag files from the list on the left onto this canvas. Then drag from a column in one file to the matching column in another,
-              or click one column and then the other.
-            </p>
-            <div className="mt-4 flex justify-center gap-2">
-              <Button variant="primary" size="sm" onClick={addAll}>
-                <Plus className="size-3.5" /> Add all files
-              </Button>
-              {suggestions.length > 0 && (
-                <Button size="sm" onClick={() => suggestions.forEach((s) => addLink({ from: s.from, to: s.to }))}>
-                  <Sparkles className="size-3.5" /> Use {suggestions.length} suggested link{suggestions.length === 1 ? '' : 's'}
-                </Button>
-              )}
-            </div>
-          </div>
+      {!pending && links.length === 0 && onCanvas.length > 1 && (
+        <Panel position="bottom-center">
+          <p className="max-w-md rounded-full bg-ink px-4 py-2 text-center text-[12.5px] text-bg shadow-lg">
+            To connect two files, drag from a column in one to the column with the same IDs in the other.
+          </p>
         </Panel>
       )}
     </ReactFlow>

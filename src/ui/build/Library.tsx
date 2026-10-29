@@ -106,7 +106,7 @@ export function Library({ tree }: { tree: Tree }) {
         ))}
         {groups.length === 0 && <p className="px-3 py-6 text-center text-sm text-muted">No metrics match.</p>}
       </div>
-      <p className="border-t border-line px-3 py-2 text-[11px] leading-4 text-faint">Click to add, or drag onto the canvas. Columns set to Metric in Data appear here.</p>
+      <p className="border-t border-line px-3 py-2 text-[11px] leading-4 text-faint">Click to add, or drag onto the canvas. Columns marked “Number to track” in Files appear here.</p>
     </aside>
   )
 }

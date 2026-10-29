@@ -10,7 +10,7 @@ likely range and every step of the calculation. **Runs entirely in your browser;
 
 | Step | What you do |
 |---|---|
-| **1 · Data** | Drop in `.xlsx / .xls / .csv / .tsv / .ods` files. Dates, IDs and metrics are detected automatically. In **Table Links**, drag files onto a canvas and draw a line from a column in one file to the matching column in another (e.g. `customer_id` → `ID`). |
+| **1 · Files** | Drop in `.xlsx / .xls / .csv / .tsv / .ods` files. Every file appears as a card on one canvas; draw a line from a column in one file to the matching column in another (e.g. `customer_id` → `ID`). Click a file to see its data and settings. |
 | **2 · Build** | Click metrics to add them as cards. Add **Formula** cards like `[Orders] * [Realized Price]`; their links draw themselves. Drag from a card's top dot to the card it affects, and Treepath learns that effect from your history with linear regression. |
 | **3 · Forecast** | Type a change or use the input controls. See baseline → forecast, the change, a P5–P95 range, what drove it, and the full calculation. The affected path lights up green (up) or red (down). |
 
@@ -29,16 +29,16 @@ Open http://localhost:5173 and click **Try Sample Data**. It loads the sample fi
 
 - **Import:** multiple files and sheets, parsed in a Web Worker. Excel dates, dd/mm vs mm/dd, `1,234`, `฿99`,
   `12%` and `(40)` are all understood. Each column is used as *Date*, *Metric*, *Category / ID* or *Ignore*.
-- **Table Links canvas:** drag (or click) files onto the canvas; each shows its ID columns with sample values.
+- **Files canvas:** the Files page shows every file as a card with its ID columns and sample values; click a card to open its data.
   Drag from one column to the matching column in another file, or click one and then the other. Names can differ
   (`region_code`, `Region`, `city`) and so can values (`BKK` vs `Bangkok`, translated through a lookup file).
   Every link shows its % match; click it for details, unmatched values, or to remove it. Suggested links appear as
-  dashed lines you can accept with one click, and **Tidy Up** lays files out left (data) to right (lookups).
-  **Check that every row finds its key** shows rows per key for every file and lists anything unmatched.
+  dashed lines (or connect them all with one click), and **Tidy Up** puts lookup files in the middle with data files around them.
+  **Check the connections** shows rows per key for every file and lists anything unmatched.
   In Build, **Learn Effects By** compares files key by key (e.g. region by region) instead of on totals.
 - **Tree builder:**
   - Links are **Formula** (exact, red when subtracted), **Learned from history**, or **Note only** (no maths).
-  - Formula cards (ochre, `ƒ` band, shown with their expression) look clearly different from data cards.
+  - Formula cards (violet, `ƒ` band, shown with their expression) look clearly different from data cards.
     Every card opens to show its details, or open them all at once with **Show Details**.
   - Select a card to see how every other card moves with it: correlation of changes (r, with p-value) on
     each card and ranked in the side panel.

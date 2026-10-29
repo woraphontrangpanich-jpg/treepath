@@ -218,10 +218,10 @@ function CardImpl({ id, data, selected }: NodeProps<CardNode>) {
       className={clsx(
         'w-[248px] border text-left',
         isOutcome
-          ? 'rounded-[18px] border-ink bg-ink text-bg shadow-[0_18px_40px_-22px_rgb(23_35_56/0.65)]'
+          ? 'rounded-[18px] border-ink bg-ink text-bg shadow-[0_18px_40px_-22px_rgb(17_42_51/0.65)]'
           : isFormula
-            ? 'flex overflow-hidden rounded-lg border-formula/60 bg-formula-soft shadow-[0_6px_16px_-12px_rgb(167_104_16/0.6)]'
-            : 'rounded-xl border-line bg-surface shadow-[0_1px_0_rgb(23_35_56/0.04)]',
+            ? 'flex overflow-hidden rounded-lg border-formula/60 bg-formula-soft shadow-[0_6px_16px_-12px_rgb(109_74_214/0.55)]'
+            : 'rounded-xl border-line bg-surface shadow-[0_1px_0_rgb(17_42_51/0.04)]',
         selected && 'outline-2 outline-offset-[3px] outline-accent',
         issue && !scenario && !isOutcome && 'border-down/60',
         dimmed && 'opacity-35',
@@ -231,7 +231,7 @@ function CardImpl({ id, data, selected }: NodeProps<CardNode>) {
     >
       <Handle type="target" position={Position.Bottom} />
       {isFormula && !isOutcome && (
-        // A solid ochre band: formula cards are calculated, never read from a file.
+        // A solid violet band: formula cards are calculated, never read from a file.
         <div className="flex w-7 shrink-0 items-start justify-center bg-formula pt-2.5" aria-hidden>
           <span className="font-display text-[15px] text-white italic">ƒ</span>
         </div>

@@ -13,7 +13,7 @@ function Notices() {
   return (
     <div className="pointer-events-none fixed right-4 bottom-4 z-50 flex w-96 max-w-[calc(100vw-2rem)] flex-col gap-2" aria-live="polite">
       {busy && (
-        <div className="toast pointer-events-auto flex items-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm text-bg shadow-[0_12px_32px_-12px_rgb(23_35_56/0.35)]">
+        <div className="toast pointer-events-auto flex items-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm text-bg shadow-[0_12px_32px_-12px_rgb(17_42_51/0.35)]">
           <Loader2 className="size-4 animate-spin" />
           {busy}
         </div>
@@ -23,7 +23,7 @@ function Notices() {
           key={n.id}
           data-leaving={n.leaving ? 'true' : undefined}
           className={clsx(
-            'toast pointer-events-auto flex items-start gap-3 rounded-2xl px-4 py-3 text-sm shadow-[0_12px_32px_-12px_rgb(23_35_56/0.35)]',
+            'toast pointer-events-auto flex items-start gap-3 rounded-2xl px-4 py-3 text-sm shadow-[0_12px_32px_-12px_rgb(17_42_51/0.35)]',
             n.kind === 'error' ? 'bg-down text-white' : 'bg-ink text-bg',
           )}
         >
