@@ -25,6 +25,8 @@ interface State {
   hydrated: boolean
   tables: Table[]
   links: Link[]
+  /** Where each file sits on the Table Links canvas; files not listed aren't on it. */
+  linkLayout: Record<string, { x: number; y: number }>
   workspace: Workspace
   dataView: DataView
   selectedTableId: string | null
@@ -38,8 +40,10 @@ interface State {
   removeTable: (id: string) => void
   renameTable: (id: string, name: string) => void
   updateColumn: (tableId: string, column: string, patch: Partial<Pick<Column, 'role' | 'aggregation' | 'format'>>) => void
-  addLink: (link: Omit<Link, 'id'>) => void
+  addLink: (link: Omit<Link, 'id'>) => string
   removeLink: (id: string) => void
+  placeTable: (id: string, pos: { x: number; y: number }) => void
+  unplaceTable: (id: string) => void
   clearAll: () => void
   setBusy: (msg: string | null) => void
   notify: (kind: Notice['kind'], text: string, action?: Notice['action']) => void
@@ -58,6 +62,7 @@ export const useStore = create<State>((setState, getState) => ({
   hydrated: false,
   tables: [],
   links: [],
+  linkLayout: {},
   workspace: workspaceFromHash(),
   dataView: 'table',
   selectedTableId: null,
@@ -95,6 +100,7 @@ export const useStore = create<State>((setState, getState) => ({
       return {
         tables,
         links: s.links.filter((l) => l.from.tableId !== id && l.to.tableId !== id),
+        linkLayout: Object.fromEntries(Object.entries(s.linkLayout).filter(([k]) => k !== id)),
         selectedTableId: s.selectedTableId === id ? (tables[0]?.id ?? null) : s.selectedTableId,
       }
     }),
@@ -111,11 +117,18 @@ export const useStore = create<State>((setState, getState) => ({
   addLink: (link) => {
     const id = globalThis.crypto?.randomUUID?.() ?? `l_${Date.now()}`
     setState((s) => ({ links: [...s.links, { ...link, id }] }))
+    return id
   },
   removeLink: (id) => setState((s) => ({ links: s.links.filter((l) => l.id !== id) })),
+  placeTable: (id, pos) => setState((s) => ({ linkLayout: { ...s.linkLayout, [id]: pos } })),
+  unplaceTable: (id) =>
+    setState((s) => ({
+      linkLayout: Object.fromEntries(Object.entries(s.linkLayout).filter(([k]) => k !== id)),
+      links: s.links.filter((l) => l.from.tableId !== id && l.to.tableId !== id),
+    })),
 
   clearAll: () => {
-    setState({ tables: [], links: [], selectedTableId: null })
+    setState({ tables: [], links: [], linkLayout: {}, selectedTableId: null })
     void del(STORAGE_KEY)
   },
 
@@ -135,6 +148,7 @@ export const useStore = create<State>((setState, getState) => ({
 interface Persisted {
   tables: Table[]
   links: Link[]
+  linkLayout?: Record<string, { x: number; y: number }>
   selectedTableId: string | null
 }
 
@@ -148,7 +162,7 @@ export async function hydrate() {
         t.columns = t.columns.map((c) => (c.role === 'dimension' ? { ...c, role: 'key' } : c))
         t.name = t.name.replace(' · ', ' › ')
       }
-    if (saved?.tables) useStore.setState({ tables: saved.tables, links: saved.links ?? [], selectedTableId: saved.selectedTableId ?? saved.tables[0]?.id ?? null })
+    if (saved?.tables) useStore.setState({ tables: saved.tables, links: saved.links ?? [], linkLayout: saved.linkLayout ?? {}, selectedTableId: saved.selectedTableId ?? saved.tables[0]?.id ?? null })
   } catch (err) {
     console.warn('Treepath: could not read saved data', err)
   }
@@ -157,12 +171,12 @@ export async function hydrate() {
 
   let timer: ReturnType<typeof setTimeout> | undefined
   useStore.subscribe((s, prev) => {
-    if (s.tables === prev.tables && s.links === prev.links && s.selectedTableId === prev.selectedTableId) return
+    if (s.tables === prev.tables && s.links === prev.links && s.linkLayout === prev.linkLayout && s.selectedTableId === prev.selectedTableId) return
     clearTimeout(timer)
     timer = setTimeout(() => {
-      const { tables, links, selectedTableId } = useStore.getState()
+      const { tables, links, linkLayout, selectedTableId } = useStore.getState()
       if (tables.length === 0) return
-      set(STORAGE_KEY, { tables, links, selectedTableId } satisfies Persisted).catch((err) =>
+      set(STORAGE_KEY, { tables, links, linkLayout, selectedTableId } satisfies Persisted).catch((err) =>
         console.warn('Treepath: could not save data', err),
       )
     }, 500)

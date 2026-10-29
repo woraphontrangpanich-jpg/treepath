@@ -143,7 +143,7 @@ export function DataWorkspace() {
       ) : (
         <>
           <SourcesPanel />
-          <main className={clsx('min-w-0 flex-1 overflow-y-auto')}>
+          <main className={clsx('min-w-0 flex-1', dataView === 'links' ? 'overflow-hidden' : 'overflow-y-auto')}>
             {dataView === 'links' ? <LinksView /> : table && <TableView key={table.id} table={table} />}
           </main>
         </>

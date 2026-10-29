@@ -12,7 +12,7 @@ export function Logo() {
         <circle cx="14" cy="25" r="2.6" className="fill-ink" />
       </svg>
       <span className="font-display text-[19px] leading-none" translate="no">
-        treepath
+        Treepath
       </span>
     </div>
   )

@@ -6,9 +6,9 @@ import type { Grain } from '../../data/types'
 import { formatChange, formatValue } from '../../lib/format'
 import { TRANSFORM_LABEL, type DriverModel } from '../../model/drivers'
 import { modelStep, parseChange, runScenario, substitute, type ScenarioResult } from '../../model/scenario'
-import { useStore } from '../../state/store'
 import { activeScenario, activeTree, useTrees } from '../../state/trees'
 import { kindOf, type AdjustmentKind, type Assumption, type Scenario, type Tree } from '../../tree/types'
+import { StartTree } from '../build/BuildWorkspace'
 import { Canvas } from '../build/Canvas'
 import { Evidence } from './Evidence'
 import { useTreeModel, type TreeModel } from '../build/useTreeModel'
@@ -47,20 +47,12 @@ function Collapsible({ title, children, defaultOpen = false }: { title: string; 
 export function ScenarioWorkspace() {
   const tree = useTrees(activeTree)
   const ensureScenario = useTrees((s) => s.ensureScenario)
-  const setWorkspace = useStore((s) => s.setWorkspace)
   useEffect(() => {
     if (tree && !activeScenario(tree)) ensureScenario()
   }, [tree, ensureScenario])
   if (!tree)
     return (
-      <div className="grid flex-1 place-items-center p-8 text-center">
-        <div>
-          <p className="font-semibold">No tree yet</p>
-          <Button className="mt-3" onClick={() => setWorkspace('build')}>
-            Create one in Build
-          </Button>
-        </div>
-      </div>
+      <StartTree />
     )
   const scenario = activeScenario(tree)
   if (!scenario) return null
@@ -170,8 +162,12 @@ function DescribeChange({ tree }: { tree: Tree }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const driverSource = tree.edges.find((e) => e.role === 'driver')?.source
   const firstInput = tree.nodes.find((n) => n.id === driverSource) ?? tree.nodes.find((n) => kindOf(n) === 'metric')
-  const apply = () => {
-    const r = parseChange(text, tree)
+  // One-click starters built from this tree's own inputs.
+  const inputs = tree.edges.filter((e) => e.role === 'driver').map((e) => tree.nodes.find((n) => n.id === e.source)!).filter(Boolean)
+  const others = tree.nodes.filter((n) => kindOf(n) === 'metric' && n.id !== tree.outcomeId && !inputs.includes(n))
+  const examples = [...new Set([...inputs, ...others].map((n) => n.label))].slice(0, 3).map((l, i) => (i === 1 ? `${l} -10%` : `${l} +20%`))
+  const apply = (input = text) => {
+    const r = parseChange(input, tree)
     if (!r.ok) return setMsg({ ok: false, text: r.error })
     const { nodeId: _n, ...a } = r.assumption
     setAssumption(r.assumption.nodeId, a)
@@ -207,7 +203,19 @@ function DescribeChange({ tree }: { tree: Tree }) {
         </Button>
       </form>
       {msg && <p className={clsx('mt-2 text-xs', msg.ok ? 'text-up' : 'text-down')}>{msg.text}</p>}
-      <p className="mt-2 text-[11px] text-faint">Try “set Voucher Coverage to 15%”, “reduce Cost per Order by 0.5” or “Ad Spend +10%”.</p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] text-faint">Try</span>
+        {examples.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            onClick={() => apply(ex)}
+            className="press rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-[11.5px] text-ink hover:border-accent hover:text-accent"
+          >
+            {ex}
+          </button>
+        ))}
+      </div>
     </Section>
   )
 }

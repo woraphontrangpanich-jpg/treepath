@@ -1,10 +1,11 @@
 import { clsx } from 'clsx'
-import { FileSpreadsheet, Link2, Plus, Sheet, Sparkles, Trash2 } from 'lucide-react'
+import { Check, FileSpreadsheet, GripVertical, Link2, Plus, Sheet, Sparkles, Trash2 } from 'lucide-react'
 import { useMemo, useRef } from 'react'
 import { ACCEPTED_EXTENSIONS } from '../../data/parse'
 import type { Table } from '../../data/types'
 import { useStore } from '../../state/store'
 import { Button } from '../primitives'
+import { nextSpot, TABLE_MIME } from './LinkCanvas'
 import { useImport } from './useImport'
 
 export function FilePicker({ children, variant = 'secondary' }: { children: React.ReactNode; variant?: 'primary' | 'secondary' }) {
@@ -35,7 +36,8 @@ export function SourcesPanel() {
   const links = useStore((s) => s.links)
   const selectedTableId = useStore((s) => s.selectedTableId)
   const dataView = useStore((s) => s.dataView)
-  const { selectTable, setDataView, clearAll } = useStore.getState()
+  const layout = useStore((s) => s.linkLayout)
+  const { selectTable, setDataView, clearAll, placeTable } = useStore.getState()
   const { loadSamples } = useImport()
 
   const byFile = useMemo(() => {
@@ -54,6 +56,7 @@ export function SourcesPanel() {
         </FilePicker>
       </div>
 
+      {dataView === 'links' && <p className="mx-4 mb-1 rounded-lg bg-accent-soft px-2.5 py-1.5 text-xs text-accent">Drag a file onto the canvas, or click it.</p>}
       <nav className="flex-1 overflow-y-auto overscroll-contain px-2 pb-2" aria-label="Imported tables">
         {byFile.map(([file, ts]) => (
           <div key={file} className="mt-2">
@@ -68,9 +71,20 @@ export function SourcesPanel() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => selectTable(t.id)}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData(TABLE_MIME, t.id)
+                    e.dataTransfer.effectAllowed = 'copy'
+                  }}
+                  onClick={() => {
+                    // On the links canvas a click adds the file; once it's there, a click opens its rows as usual.
+                    if (dataView === 'links' && !layout[t.id]) placeTable(t.id, nextSpot(layout, links, t.id))
+                    else selectTable(t.id)
+                  }}
+                  title={dataView === 'links' ? (layout[t.id] ? 'On the canvas. Click to see its rows' : 'Drag onto the canvas, or click to add it') : undefined}
                   className={clsx(
                     'group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm',
+                    dataView === 'links' && 'cursor-grab active:cursor-grabbing',
                     active ? 'bg-accent-soft text-ink' : 'text-ink hover:bg-surface-2',
                   )}
                 >
@@ -81,6 +95,8 @@ export function SourcesPanel() {
                       {t.rows.length.toLocaleString()} rows, {metrics} metric{metrics === 1 ? '' : 's'}
                     </span>
                   </span>
+                  {dataView === 'links' &&
+                    (layout[t.id] ? <Check className="size-3.5 text-up" aria-label="On the canvas" /> : <GripVertical className="size-3.5 text-faint" />)}
                 </button>
               )
             })}

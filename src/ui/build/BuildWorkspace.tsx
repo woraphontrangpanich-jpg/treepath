@@ -206,7 +206,7 @@ function Editor({ tree }: { tree: Tree }) {
   )
 }
 
-function StartTree() {
+export function StartTree() {
   const tables = useStore((s) => s.tables)
   const newTree = useTrees((s) => s.newTree)
   const sample = hasSampleTables(tables)
@@ -225,7 +225,7 @@ function StartTree() {
             <Sparkles className="size-5 text-accent" />
             <div className="mt-3 font-semibold">Net Revenue sample</div>
             <p className="mt-1 text-sm text-muted">
-              {sample ? 'A finished tree on the sample data: formulas, cost deductions and model drivers.' : 'Load the sample data in the Data tab first.'}
+              {sample ? 'A finished tree on the sample data: formulas, costs and effects learned from history.' : 'Load the sample data in the Data tab first.'}
             </p>
           </button>
           <button type="button" onClick={() => newTree()} className="rounded-2xl border border-line bg-surface p-5 text-left hover:border-accent">

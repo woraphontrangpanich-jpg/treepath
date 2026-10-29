@@ -22,7 +22,7 @@ export const ROLES: Record<EdgeRole, RoleMeta> = {
     derived: true,
   },
   cost: {
-    label: 'Cost deduction',
+    label: 'Subtracted',
     short: 'deduct',
     description: 'Exact maths: the input is subtracted in the target’s formula.',
     color: 'var(--e-cost)',
@@ -30,15 +30,15 @@ export const ROLES: Record<EdgeRole, RoleMeta> = {
     derived: true,
   },
   driver: {
-    label: 'Model driver',
+    label: 'Learned from history',
     short: 'model',
-    description: 'Fitted from history with linear regression; carries numbers in Scenario.',
+    description: 'Fitted from history with linear regression; carries numbers in Forecast.',
     color: 'var(--e-driver)',
     numeric: true,
     derived: false,
   },
   influence: {
-    label: 'Influence',
+    label: 'Note only',
     short: 'influence',
     description: 'Context only: you believe it matters, but it doesn’t calculate.',
     color: 'var(--e-influence)',

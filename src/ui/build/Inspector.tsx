@@ -611,7 +611,7 @@ function MatchKeySection({ tree, model }: { tree: Tree; model: TreeModel }) {
   const current = tree.matchKey ? candidates.findIndex((c) => c.tableId === tree.matchKey!.tableId && c.column === tree.matchKey!.column) : -1
   const keyed = tree.nodes.filter((n) => model.series.byNode.get(n.id)?.panel).length
   return (
-    <Section title="Match Rows By">
+    <Section title="Learn Effects By">
       {candidates.length === 0 ? (
         <p className="text-xs text-muted">
           Link your files by their shared key first, in{' '}
@@ -636,19 +636,19 @@ function MatchKeySection({ tree, model }: { tree: Tree; model: TreeModel }) {
               setMatchKey(i < 0 ? undefined : candidates[i])
             }}
             className="w-full"
-            aria-label="Match rows by"
+            aria-label="Learn effects by"
           >
-            <option value={-1}>Date only (add up totals)</option>
+            <option value={-1}>Totals per {tree.grain}</option>
             {candidates.map((c, i) => (
               <option key={`${c.tableId}|${c.column}`} value={i}>
-                Date and {refLabel(tables, c)}
+                Each {c.column} ({refLabel(tables, c)})
               </option>
             ))}
           </Select>
           <p className="text-[11px] leading-4 text-faint">
             {tree.matchKey && model.series.keys
-              ? `${model.series.keys.keys.length} keys; ${keyed} of ${tree.nodes.length} cards split by key. Learned effects compare like with like, key by key.`
-              : 'Learned effects use daily totals. Matching by a key (e.g. region) lines each file up row by row and gives the model more evidence.'}
+              ? `Comparing ${model.series.keys.keys.length} ${tree.matchKey.column} values one by one (${keyed} of ${tree.nodes.length} cards split). More evidence, fairer effects.`
+              : `Effects are learned from ${{ day: 'daily', week: 'weekly', month: 'monthly' }[tree.grain]} totals. Pick a key (e.g. region) to compare each one separately instead.`}
           </p>
         </>
       )}

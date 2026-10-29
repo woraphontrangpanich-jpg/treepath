@@ -1,4 +1,4 @@
-# treepath
+# Treepath
 
 Build a metric tree from your Excel files and forecast what happens to your outcome when something changes.
 
@@ -10,7 +10,7 @@ likely range and every step of the calculation. **Runs entirely in your browser;
 
 | Step | What you do |
 |---|---|
-| **1 · Data** | Drop in `.xlsx / .xls / .csv / .tsv / .ods` files. Dates, IDs and metrics are detected automatically. Link files through a shared ID column (e.g. `region_code`). |
+| **1 · Data** | Drop in `.xlsx / .xls / .csv / .tsv / .ods` files. Dates, IDs and metrics are detected automatically. In **Table Links**, drag files onto a canvas and draw a line from a column in one file to the matching column in another (e.g. `customer_id` → `ID`). |
 | **2 · Build** | Click metrics to add them as cards. Add **Formula** cards like `[Orders] * [Realized Price]`; their links draw themselves. Drag from a card's top dot to the card it affects, and Treepath learns that effect from your history with linear regression. |
 | **3 · Forecast** | Type a change or use the input controls. See baseline → forecast, the change, a P5–P95 range, what drove it, and the full calculation. The affected path lights up green (up) or red (down). |
 
@@ -23,19 +23,21 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and click **Try Sample Data**, then **Build → Net Revenue sample → Forecast**.
+Open http://localhost:5173 and click **Try Sample Data**. It loads the sample files, links them and builds a ready-made Net Revenue tree, so you can go straight to **Forecast** and click an example change like *Ad Spend +20%*.
 
 ## Features
 
 - **Import:** multiple files and sheets, parsed in a Web Worker. Excel dates, dd/mm vs mm/dd, `1,234`, `฿99`,
   `12%` and `(40)` are all understood. Each column is used as *Date*, *Metric*, *Category / ID* or *Ignore*.
-- **Keys across files:** link files by their shared key even when it's named differently in each
-  (`region_code`, `Region`, `city`) or uses different values (`BKK` vs `Bangkok`, translated through a lookup file).
-  **Check Matched Keys** shows rows per key for every file and lists anything unmatched. In Build, **Match rows by**
-  lines files up by date *and* key, so learned effects compare like with like (e.g. region by region).
+- **Table Links canvas:** drag (or click) files onto the canvas; each shows its ID columns with sample values.
+  Drag from one column to the matching column in another file, or click one and then the other. Names can differ
+  (`region_code`, `Region`, `city`) and so can values (`BKK` vs `Bangkok`, translated through a lookup file).
+  Every link shows its % match; click it for details, unmatched values, or to remove it. Suggested links appear as
+  dashed lines you can accept with one click, and **Tidy Up** lays files out left (data) to right (lookups).
+  **Check that every row finds its key** shows rows per key for every file and lists anything unmatched.
+  In Build, **Learn Effects By** compares files key by key (e.g. region by region) instead of on totals.
 - **Tree builder:**
-  - Three kinds of link: **Formula** (exact, red when subtracted), **Model driver** (learned from history), and
-    **Influence** (context only).
+  - Links are **Formula** (exact, red when subtracted), **Learned from history**, or **Note only** (no maths).
   - Formula cards (ochre, `ƒ` band, shown with their expression) look clearly different from data cards.
     Every card opens to show its details, or open them all at once with **Show Details**.
   - Select a card to see how every other card moves with it: correlation of changes (r, with p-value) on

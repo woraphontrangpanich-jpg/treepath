@@ -106,3 +106,16 @@ export function suggestLinks(tables: Table[], existing: Link[]): LinkSuggestion[
   }
   return out.sort((x, y) => y.stats.matchRate - x.stats.matchRate)
 }
+
+/**
+ * Order a link drawn by hand so `to` is the lookup side (unique values), whichever end the user started from.
+ * Ties keep the drawn order.
+ */
+export function orientLink(tables: Table[], a: ColumnRef, b: ColumnRef): Pick<Link, 'from' | 'to'> {
+  const s = linkStats(tables, { from: a, to: b })
+  return s?.cardinality === 'one-to-many' ? { from: b, to: a } : { from: a, to: b }
+}
+
+export function hasLink(links: Pick<Link, 'from' | 'to'>[], a: ColumnRef, b: ColumnRef) {
+  return links.some((l) => sameLink(l, a, b))
+}

@@ -23,13 +23,13 @@ export function Legend() {
                 <line x1="0" y1="4" x2="28" y2="4" strokeWidth="2" style={{ stroke: m.color, strokeDasharray: m.dash }} />
               </svg>
               <span className="flex-1">{m.label}</span>
-              {m.numeric && <span className="text-[10px] text-faint">calc</span>}
+              {!m.numeric && <span className="text-[10px] text-faint">no maths</span>}
             </li>
           )
         })}
       </ul>
       <p className="mt-2.5 border-t border-line pt-2 text-[10.5px] leading-4 text-faint">
-        Inputs sit below, outcomes above. Only “calc” links move numbers in a forecast.
+        Inputs sit at the bottom, the outcome at the top.
       </p>
     </div>
   )

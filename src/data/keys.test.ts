@@ -6,7 +6,7 @@ import { runScenario } from '../model/scenario'
 import { computeTreeSeries } from '../tree/compute'
 import { buildSampleTree } from '../tree/sample'
 import { keyCoverage, resolveKeys } from './keys'
-import { suggestLinks } from './links'
+import { hasLink, orientLink, suggestLinks } from './links'
 import { parseWorkbook } from './parse'
 import type { Link, Table } from './types'
 
@@ -100,5 +100,14 @@ describe('regression matched by date and key', () => {
     const r = runScenario(tree, series, models, [{ nodeId: tree.nodes.find((n) => n.label === 'Ad Spend')!.id, kind: 'pct', value: 20 }], 28)
     expect(r.evidence).toBe('model')
     expect(r.outcome!.delta).toBeGreaterThan(0)
+  })
+})
+
+describe('links drawn by hand', () => {
+  it('points at the lookup whichever end you start from', () => {
+    const sales = { tableId: t('sales.xlsx').id, column: 'Region' }
+    expect(orientLink(tables, ref, sales)).toEqual({ from: sales, to: ref })
+    expect(orientLink(tables, sales, ref)).toEqual({ from: sales, to: ref })
+    expect(hasLink(links, ref, sales)).toBe(true)
   })
 })

@@ -89,7 +89,7 @@ export const useTrees = create<TreeState>((setState, getState) => {
     trees: [],
     activeId: null,
     selection: null,
-    showLegend: true,
+    showLegend: false,
     details: {},
     detailsAll: false,
     toggleDetails: (id) => setState((s) => ({ details: { ...s.details, [id]: !(s.details[id] ?? s.detailsAll) } })),

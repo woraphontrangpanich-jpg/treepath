@@ -4,6 +4,9 @@ import { suggestLinks } from '../../data/links'
 import { isAcceptedFile } from '../../data/parse'
 import { plural } from '../../lib/format'
 import { useStore } from '../../state/store'
+import { useTrees } from '../../state/trees'
+import { withAutoLayout } from '../../tree/layout'
+import { buildSampleTree } from '../../tree/sample'
 
 export function useImport() {
   const { addTables, setBusy, notify } = useStore.getState()
@@ -42,7 +45,10 @@ export function useImport() {
       // The samples' keys match perfectly, so link them right away (lookup links only).
       const { tables: all, links, addLink } = useStore.getState()
       for (const s of suggestLinks(all, links)) if (s.stats.matchRate === 1) addLink({ from: s.from, to: s.to })
-      notify('info', `Loaded ${plural(tables.length, 'sample table')}.`)
+      // A finished tree too, so Build and Forecast work straight away.
+      const sample = useTrees.getState().trees.length === 0 ? buildSampleTree(useStore.getState().tables) : null
+      if (sample) useTrees.getState().newTree(await withAutoLayout(sample))
+      notify('info', `Loaded ${plural(tables.length, 'sample table')}${sample ? ' and a ready-made Net Revenue tree' : ''}.`, sample ? { label: 'Open it', run: () => useStore.getState().setWorkspace('build') } : undefined)
     } catch (err) {
       notify('error', err instanceof Error ? err.message : 'Could not load samples')
     } finally {
