@@ -36,13 +36,13 @@
  * amber formulas, and the validated chart series.
  */
 :root {
-  --bg: #f6f0e6;
-  --surface: #fffaf2;
-  --surface-2: #f1e9dc;
+  --bg: #e9dfcf;
+  --surface: #fffbf4;
+  --surface-2: #f5ede1;
   --ink: #2b1d14;
   --muted: #6b5646;
-  --faint: #a8927e;
-  --line: #e4d8c6;
+  --faint: #a08a75;
+  --line: #d9cbb4;
   --accent: #5a3a22;
   --accent-ink: #fffaf2;
   --accent-soft: #efe3d2;
@@ -79,18 +79,18 @@
 
 [data-theme='dark'] {
   --bg: #000000;
-  --surface: #0a0a0a;
-  --surface-2: #141414;
+  --surface: #161616;
+  --surface-2: #202020;
   --ink: #ededed;
   --muted: #a1a1a1;
   --faint: #6b6b6b;
-  --line: #262626;
+  --line: #323232;
   --accent: #ededed;
   --accent-ink: #0a0a0a;
-  --accent-soft: #1f1f1f;
+  --accent-soft: #2a2a2a;
   --pop: #ededed;
   --pop-ink: #0a0a0a;
-  --pop-soft: #1a1a1a;
+  --pop-soft: #242424;
   --frame: #000000;
   --frame-ink: #ededed;
   --formula: #f5a524;
