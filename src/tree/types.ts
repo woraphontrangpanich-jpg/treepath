@@ -1,4 +1,4 @@
-import type { Aggregation, Grain } from '../data/types'
+import type { Aggregation, ColumnRef, Grain } from '../data/types'
 
 /** Restricts a metric to rows whose `column` is one of `values`; `tableId` may be a linked table. */
 export interface BindingFilter {
@@ -80,6 +80,11 @@ export interface Tree {
   edges: TreeEdge[]
   outcomeId?: string
   grain: Grain
+  /**
+   * Match rows across files by this key (plus date) instead of adding up totals: e.g. regions › region_code.
+   * Other files reach it through table links, even with different column names or values.
+   */
+  matchKey?: ColumnRef
   scenarios?: Scenario[]
   activeScenarioId?: string
   createdAt: string

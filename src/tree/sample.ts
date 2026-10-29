@@ -50,6 +50,9 @@ export function buildSampleTree(tables: Table[]): Tree | null {
     { id: newId('e'), source: byLabel('Voucher Coverage'), target: byLabel('Orders'), role: 'driver', expectedSign: 'positive' },
     { id: newId('e'), source: byLabel('Rain Index'), target: byLabel('Orders'), role: 'driver', expectedSign: 'negative' },
   ]
-  const full: Tree = { ...tree, nodes, edges: manual, outcomeId: byLabel('Net Revenue') }
+  // Match rows by region across files when the regions lookup is loaded.
+  const regions = tables.find((t) => t.fileName === 'regions.csv' && t.columns.some((c) => c.name === 'region_code'))
+  const matchKey = regions ? { tableId: regions.id, column: 'region_code' } : undefined
+  const full: Tree = { ...tree, nodes, edges: manual, outcomeId: byLabel('Net Revenue'), matchKey }
   return { ...full, edges: syncFormulaEdges(full) }
 }

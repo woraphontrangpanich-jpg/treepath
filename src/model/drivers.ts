@@ -78,7 +78,11 @@ export interface DriverModel {
   slopeCov: number[][]
   r2: number
   adjR2: number
+  fStat: number
+  fP: number
   n: number
+  /** Number of matched keys when fitted per key (e.g. 3 regions); 0 when fitted on totals. */
+  keys: number
   firstDate: string
   lastDate: string
   residSd: number
@@ -126,6 +130,13 @@ function design(type: ModelType, target: SeriesPoint[], tt: Transform, drivers: 
     out.x.push(row)
   }
   return out
+}
+
+/** Stack per-key designs into one, ordered by date so walk-forward validation stays chronological. */
+function stack(parts: Design[]): Design {
+  const rows = parts.flatMap((d) => d.dates.map((date, i) => ({ date, y: d.y[i], x: d.x[i] })))
+  rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+  return { dates: rows.map((r) => r.date), y: rows.map((r) => r.y), x: rows.map((r) => r.x) }
 }
 
 function walkForward(d: Design): WalkForward | null {
@@ -177,10 +188,10 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
   const ts = series.byNode.get(targetId)
   if (!ts || ts.points.length === 0) return { ok: false, ...base, error: ts?.error ?? `${target.label} has no data` }
   const type: ModelType = 'change'
-  const tt = type === 'change' ? chooseTransform(ts.points, ts.format) : 'raw'
   const warnings: string[] = []
 
-  const usable: { edge: TreeEdge; label: string; points: SeriesPoint[]; tf: Transform; lag: number }[] = []
+  type Usable = { edge: TreeEdge; label: string; points: SeriesPoint[]; panel?: Map<string, SeriesPoint[]>; format: NodeFormat; tf: Transform; lag: number }
+  const usable: Usable[] = []
   for (const e of edges) {
     const src = tree.nodes.find((n) => n.id === e.source)
     const s = series.byNode.get(e.source)
@@ -188,12 +199,30 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
       warnings.push(`${src?.label ?? 'A driver'} has no data and was left out.`)
       continue
     }
-    const tf = type === 'change' ? chooseTransform(s.points, s.format) : 'raw'
-    usable.push({ edge: e, label: src.label, points: s.points, tf, lag: e.lag ?? 0 })
+    usable.push({ edge: e, label: src.label, points: s.points, panel: s.panel, format: s.format, tf: 'raw', lag: e.lag ?? 0 })
   }
   if (usable.length === 0) return { ok: false, ...base, error: 'No driver has data' }
 
-  let d = design(type, ts.points, tt, usable)
+  // With a match key, fit on rows matched by date AND key (e.g. each region), not on totals.
+  let keys: string[] = []
+  if (series.keys) {
+    const missing = [ts, ...usable].some((u) => !u.panel)
+    if (missing) {
+      const names = [!ts.panel ? target.label : null, ...usable.filter((u) => !u.panel).map((u) => u.label)].filter(Boolean)
+      warnings.push(`${names.join(', ')} ${names.length > 1 ? 'aren’t' : 'isn’t'} linked to the match key, so ${target.label} was fitted on totals.`)
+    } else keys = [...ts.panel!.keys()].filter((k) => usable.every((u) => u.panel!.has(k)))
+  }
+  const byKey = keys.length >= 2
+  const allPoints = (pts: SeriesPoint[], panel?: Map<string, SeriesPoint[]>) => (byKey && panel ? [...panel.values()].flat() : pts)
+  const tt = chooseTransform(allPoints(ts.points, ts.panel), ts.format)
+  for (const u of usable) u.tf = chooseTransform(allPoints(u.points, u.panel), u.format)
+
+  const build = (list: Usable[], lagOverride?: number) =>
+    byKey
+      ? stack(keys.map((k) => design(type, ts.panel!.get(k)!, tt, list.map((u) => ({ points: u.panel!.get(k)!, tf: u.tf, lag: lagOverride ?? u.lag })))))
+      : design(type, ts.points, tt, list.map((u) => ({ points: u.points, tf: u.tf, lag: lagOverride ?? u.lag })))
+
+  let d = build(usable)
   // Drop drivers that never move (no information to fit).
   const moving = usable.filter((_, j) => {
     const col = d.x.map((r) => r[j])
@@ -201,10 +230,10 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
   })
   for (const u of usable) if (!moving.includes(u)) warnings.push(`${u.label} never changes in this period, so its effect can't be estimated.`)
   if (moving.length === 0) return { ok: false, ...base, error: 'Drivers never change; nothing to fit' }
-  if (moving.length !== usable.length) d = design(type, ts.points, tt, moving)
+  if (moving.length !== usable.length) d = build(moving)
 
   if (d.y.length < moving.length + 10)
-    return { ok: false, ...base, error: `Only ${d.y.length} usable ${tree.grain}s of history; need at least ${moving.length + 10}. Try a finer grain.` }
+    return { ok: false, ...base, error: `Only ${d.y.length} usable rows of history; need at least ${moving.length + 10}. Try a finer grain.` }
 
   const fit = ols(d.x, d.y)
   if (!fit) return { ok: false, ...base, error: 'Drivers are perfectly collinear; remove one of them' }
@@ -216,7 +245,7 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
     if (signMismatch) warnings.push(`${u.label}: fitted effect is ${coef < 0 ? 'negative' : 'positive'}, but you expected ${u.edge.expectedSign}.`)
     if (vifs[j] > 5) warnings.push(`${u.label} overlaps strongly with other drivers (VIF ${vifs[j].toFixed(1)}); its own effect is uncertain.`)
     const lagScan = Array.from({ length: MAX_LAG_SCAN + 1 }, (_, lag) => {
-      const single = design(type, ts.points, tt, [{ points: u.points, tf: u.tf, lag }])
+      const single = build([u], lag)
       return { lag, r: correlation(single.y, single.x.map((r) => r[0])) }
     })
     return {
@@ -247,7 +276,10 @@ export function fitTarget(tree: Tree, series: TreeSeries, targetId: string): Dri
     slopeCov: fit.cov.slice(1).map((row) => row.slice(1)),
     r2: fit.r2,
     adjR2: fit.adjR2,
+    fStat: fit.fStat,
+    fP: fit.fP,
     n: fit.n,
+    keys: byKey ? keys.length : 0,
     firstDate: d.dates[0],
     lastDate: d.dates.at(-1)!,
     residSd: fit.residSd,

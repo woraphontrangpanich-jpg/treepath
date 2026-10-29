@@ -10,6 +10,8 @@ import { findByLabel, tryParse } from '../../tree/graph'
 import { MANUAL_ROLES, ROLES } from '../../tree/roles'
 import { kindOf, type BindingFilter, type EdgeRole, type MetricBinding, type NodeFormat, type Tree, type TreeNode } from '../../tree/types'
 import { Badge, Button, Segmented, Select } from '../primitives'
+import { correlationsWith, strengthLabel } from '../../model/correlate'
+import { keyCandidates, refLabel } from '../data/KeyCheck'
 import { LagScan, ModelSummary, interpret, reliability } from './ModelInfo'
 import type { TreeModel } from './useTreeModel'
 
@@ -105,6 +107,7 @@ function TreeOverview({ tree, model }: { tree: Tree; model: TreeModel }) {
         )}
         {errors.length > 0 && <p className="text-[11px] text-faint">Fix these before forecasting.</p>}
       </Section>
+      <MatchKeySection tree={tree} model={model} />
       <Section title="How to build">
         <ul className="list-disc space-y-1.5 pl-4 text-xs text-muted">
           <li>Add metrics from the library on the left, or a Formula card.</li>
@@ -201,6 +204,8 @@ function NodeInspector({ tree, node, model }: { tree: Tree; node: TreeNode; mode
         </Section>
       )}
 
+
+      <MovesWith tree={tree} nodeId={node.id} model={model} />
 
       {model.models.get(node.id) && (
         <Section title="Learned From History">
@@ -593,5 +598,96 @@ function EdgeInspector({ tree, edgeId, model }: { tree: Tree; edgeId: string; mo
         </div>
       )}
     </>
+  )
+}
+
+function MatchKeySection({ tree, model }: { tree: Tree; model: TreeModel }) {
+  const tables = useStore((s) => s.tables)
+  const links = useStore((s) => s.links)
+  const setMatchKey = useTrees((s) => s.setMatchKey)
+  const setWorkspace = useStore((s) => s.setWorkspace)
+  const setDataView = useStore((s) => s.setDataView)
+  const candidates = keyCandidates(tables, links)
+  const current = tree.matchKey ? candidates.findIndex((c) => c.tableId === tree.matchKey!.tableId && c.column === tree.matchKey!.column) : -1
+  const keyed = tree.nodes.filter((n) => model.series.byNode.get(n.id)?.panel).length
+  return (
+    <Section title="Match Rows By">
+      {candidates.length === 0 ? (
+        <p className="text-xs text-muted">
+          Link your files by their shared key first, in{' '}
+          <button
+            type="button"
+            className="text-accent underline-offset-2 hover:underline"
+            onClick={() => {
+              setWorkspace('data')
+              setDataView('links')
+            }}
+          >
+            Data › Table Links
+          </button>
+          .
+        </p>
+      ) : (
+        <>
+          <Select
+            value={current}
+            onChange={(e) => {
+              const i = Number(e.target.value)
+              setMatchKey(i < 0 ? undefined : candidates[i])
+            }}
+            className="w-full"
+            aria-label="Match rows by"
+          >
+            <option value={-1}>Date only (add up totals)</option>
+            {candidates.map((c, i) => (
+              <option key={`${c.tableId}|${c.column}`} value={i}>
+                Date and {refLabel(tables, c)}
+              </option>
+            ))}
+          </Select>
+          <p className="text-[11px] leading-4 text-faint">
+            {tree.matchKey && model.series.keys
+              ? `${model.series.keys.keys.length} keys; ${keyed} of ${tree.nodes.length} cards split by key. Learned effects compare like with like, key by key.`
+              : 'Learned effects use daily totals. Matching by a key (e.g. region) lines each file up row by row and gives the model more evidence.'}
+          </p>
+        </>
+      )}
+    </Section>
+  )
+}
+
+function MovesWith({ tree, nodeId, model }: { tree: Tree; nodeId: string; model: TreeModel }) {
+  const select = useTrees((s) => s.select)
+  const list = useMemo(() => correlationsWith(tree, model.series, nodeId), [tree, model.series, nodeId])
+  if (list.length === 0) return null
+  return (
+    <Section title="Moves With">
+      <ul className="space-y-1.5">
+        {list.slice(0, 8).map((c) => (
+          <li key={c.nodeId}>
+            <button type="button" onClick={() => select({ kind: 'node', id: c.nodeId })} className="w-full rounded-lg px-1.5 py-1 text-left hover:bg-surface-2">
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="truncate">{c.label}</span>
+                <span className={clsx('text-xs font-semibold tabular', c.p >= 0.05 ? 'text-faint' : c.r > 0 ? 'text-up' : 'text-down')}>
+                  {c.r >= 0 ? '+' : '−'}
+                  {Math.abs(c.r).toFixed(2)}
+                </span>
+              </div>
+              <div className="relative mt-1 h-1.5 rounded-full bg-surface-2">
+                <div className="absolute top-0 left-1/2 h-1.5 w-px bg-line" />
+                <div
+                  className={clsx('absolute top-0 h-1.5 rounded-full', c.r > 0 ? 'bg-up' : 'bg-down', c.p >= 0.05 && 'opacity-30')}
+                  style={c.r > 0 ? { left: '50%', width: `${Math.abs(c.r) * 50}%` } : { right: '50%', width: `${Math.abs(c.r) * 50}%` }}
+                />
+              </div>
+              <div className="mt-0.5 text-[10.5px] text-faint">
+                {strengthLabel(c.r)}, {c.p < 0.001 ? 'p < 0.001' : `p = ${c.p.toFixed(3)}`}
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="text-[11px] leading-4 text-faint">Correlation of {tree.grain}-to-{tree.grain} changes. The same numbers appear on each card while this one is selected. Faded = not significant.</p>
+    </Section>
   )
 }

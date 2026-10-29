@@ -15,6 +15,11 @@ interface TreeState {
   activeId: string | null
   selection: Selection
   showLegend: boolean
+  /** Card detail panels: per-card override, and the toolbar's show-all switch. */
+  details: Record<string, boolean>
+  detailsAll: boolean
+  toggleDetails: (id: string) => void
+  setDetailsAll: (open: boolean) => void
 
   newTree: (tree?: Tree) => string
   openTree: (id: string) => void
@@ -22,6 +27,7 @@ interface TreeState {
   duplicateTree: (id: string) => void
   renameTree: (name: string) => void
   setGrain: (grain: Grain) => void
+  setMatchKey: (ref: Tree['matchKey']) => void
   addNode: (node: Omit<TreeNode, 'id'>) => string
   updateNode: (id: string, patch: Partial<Omit<TreeNode, 'id'>>) => void
   moveNode: (id: string, position: TreeNode['position']) => void
@@ -84,6 +90,10 @@ export const useTrees = create<TreeState>((setState, getState) => {
     activeId: null,
     selection: null,
     showLegend: true,
+    details: {},
+    detailsAll: false,
+    toggleDetails: (id) => setState((s) => ({ details: { ...s.details, [id]: !(s.details[id] ?? s.detailsAll) } })),
+    setDetailsAll: (detailsAll) => setState({ detailsAll, details: {} }),
 
     newTree: (tree) => {
       const t = tree ?? emptyTree()
@@ -104,6 +114,7 @@ export const useTrees = create<TreeState>((setState, getState) => {
     },
     renameTree: (name) => mutate((t) => ({ ...t, name })),
     setGrain: (grain) => mutate((t) => ({ ...t, grain })),
+    setMatchKey: (matchKey) => mutate((t) => ({ ...t, matchKey })),
 
     addNode: (node) => {
       const id = newId('n')

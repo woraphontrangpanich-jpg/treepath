@@ -1,4 +1,5 @@
 import { pad2 } from '../data/detect'
+import { normKey, resolveKeys, type KeyResolution } from '../data/keys'
 import { aggregateSeries, dateColumnOf, type SeriesFilter } from '../data/series'
 import type { Grain, Link, SeriesPoint, Table } from '../data/types'
 import { evaluate } from './formula'
@@ -53,12 +54,36 @@ export interface NodeSeries {
   actual?: SeriesPoint[]
   format: NodeFormat
   error?: string
+  /** Same series split by the tree's match key (canonical key → points), when the key reaches this card's file. */
+  panel?: Map<string, SeriesPoint[]>
+  /** Rows whose key couldn't be matched (left out of the per-key series). */
+  unmatchedRows?: number
 }
 
 export interface TreeSeries {
   byNode: Map<string, NodeSeries>
   /** Last complete date across bound tables; partial final weeks/months are dropped. */
   lastDate: string | null
+  keys: KeyResolution | null
+}
+
+/** Evaluate a formula date by date over its inputs (dates where every input has a value). */
+function evalSeries(ast: Parameters<typeof evaluate>[0], inputs: Map<string, Map<string, number>>, fallbackDates: string[]): SeriesPoint[] {
+  let dates: string[]
+  if (inputs.size === 0) dates = fallbackDates
+  else {
+    const [first, ...rest] = [...inputs.values()]
+    dates = [...first.keys()].filter((d) => rest.every((m) => m.has(d))).sort()
+  }
+  const points: SeriesPoint[] = []
+  for (const date of dates) {
+    const v = evaluate(ast, (name) => {
+      for (const [k, m] of inputs) if (k.toLowerCase() === name.trim().toLowerCase()) return m.get(date)!
+      return NaN
+    })
+    if (Number.isFinite(v)) points.push({ date, value: v, n: 1 })
+  }
+  return points
 }
 
 export function computeTreeSeries(tree: Tree, tables: Table[], links: Link[]): TreeSeries {
@@ -72,6 +97,9 @@ export function computeTreeSeries(tree: Tree, tables: Table[], links: Link[]): T
     if (typeof max === 'string' && (lastDate === null || max > lastDate)) lastDate = max
   }
 
+  const keys = tree.matchKey ? resolveKeys(tables, links, tree.matchKey) : null
+  const complete = (pts: SeriesPoint[]) => (lastDate ? pts.filter((p) => bucketEnd(p.date, tree.grain) <= lastDate!) : pts)
+
   const actualOf = (n: TreeNode): NodeSeries | null => {
     if (!n.metric) return null
     const format: NodeFormat = n.format ?? 'number'
@@ -82,9 +110,30 @@ export function computeTreeSeries(tree: Tree, tables: Table[], links: Link[]): T
     if (!dateColumnOf(t)) return { points: [], format, error: `${t.name} has no date column` }
     const filters = resolveFilters(tables, links, t, n.metric)
     if (typeof filters === 'string') return { points: [], format, error: filters }
-    let points = aggregateSeries(t, col.name, { grain: tree.grain, aggregation: n.metric.aggregation, filters })
-    if (lastDate) points = points.filter((p) => bucketEnd(p.date, tree.grain) <= lastDate!)
-    return { points, format: n.format ?? col.format ?? 'number' }
+    const opts = { grain: tree.grain, aggregation: n.metric.aggregation, filters }
+    const points = complete(aggregateSeries(t, col.name, opts))
+    const out: NodeSeries = { points, format: n.format ?? col.format ?? 'number' }
+    const k = keys?.byTable.get(t.id)
+    if (k) {
+      // Partition rows by canonical key, then aggregate each part the same way as the total.
+      const ki = t.columns.findIndex((c) => c.name === k.column)
+      const parts = new Map<string, Table['rows']>()
+      let unmatched = 0
+      for (const row of t.rows) {
+        const nk = normKey(row[ki])
+        const canon = nk === null ? undefined : k.map.get(nk)
+        if (canon === undefined) {
+          unmatched++
+          continue
+        }
+        let part = parts.get(canon)
+        if (!part) parts.set(canon, (part = []))
+        part.push(row)
+      }
+      out.panel = new Map([...parts].map(([key, rows]) => [key, complete(aggregateSeries({ ...t, rows }, col.name, opts))]))
+      out.unmatchedRows = unmatched
+    }
+    return out
   }
 
   const { order, cyclic } = topoOrder(tree.nodes, tree.edges)
@@ -107,6 +156,7 @@ export function computeTreeSeries(tree: Tree, tables: Table[], links: Link[]): T
       continue
     }
     const inputs = new Map<string, Map<string, number>>()
+    const inputPanels = new Map<string, Map<string, SeriesPoint[]> | undefined>()
     let error: string | undefined
     for (const ref of parsed.refs) {
       const src = findByLabel(tree.nodes, ref)
@@ -116,29 +166,28 @@ export function computeTreeSeries(tree: Tree, tables: Table[], links: Link[]): T
         break
       }
       inputs.set(ref, new Map(s.points.map((p) => [p.date, p.value])))
+      inputPanels.set(ref, s.panel)
     }
     if (error) {
       byNode.set(id, { points: [], actual: actual?.points, format, error })
       continue
     }
-    // Evaluate on dates where every input has a value (constant-only formulas use the actual's dates).
-    let dates: string[]
-    if (inputs.size === 0) dates = actual?.points.map((p) => p.date) ?? []
-    else {
-      const [first, ...rest] = [...inputs.values()]
-      dates = [...first.keys()].filter((d) => rest.every((m) => m.has(d))).sort()
+    const points = evalSeries(parsed.ast, inputs, actual?.points.map((p) => p.date) ?? [])
+    // Per key too, when every input is split by the same key.
+    let panel: Map<string, SeriesPoint[]> | undefined
+    const panels = [...inputPanels.values()]
+    if (panels.length > 0 && panels.every((p) => p)) {
+      const common = [...panels[0]!.keys()].filter((key) => panels.every((p) => p!.has(key)))
+      panel = new Map(
+        common.map((key) => {
+          const m = new Map([...inputPanels].map(([ref, p]) => [ref, new Map(p!.get(key)!.map((pt) => [pt.date, pt.value]))]))
+          return [key, evalSeries(parsed.ast, m, [])]
+        }),
+      )
     }
-    const points: SeriesPoint[] = []
-    for (const date of dates) {
-      const v = evaluate(parsed.ast, (name) => {
-        for (const [k, m] of inputs) if (k.toLowerCase() === name.trim().toLowerCase()) return m.get(date)!
-        return NaN
-      })
-      if (Number.isFinite(v)) points.push({ date, value: v, n: 1 })
-    }
-    byNode.set(id, { points, actual: actual?.points, format })
+    byNode.set(id, { points, actual: actual?.points, format, panel })
   }
-  return { byNode, lastDate }
+  return { byNode, lastDate, keys }
 }
 
 export interface NodeSummary {

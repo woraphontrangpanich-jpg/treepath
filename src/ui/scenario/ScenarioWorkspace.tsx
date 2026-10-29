@@ -10,6 +10,7 @@ import { useStore } from '../../state/store'
 import { activeScenario, activeTree, useTrees } from '../../state/trees'
 import { kindOf, type AdjustmentKind, type Assumption, type Scenario, type Tree } from '../../tree/types'
 import { Canvas } from '../build/Canvas'
+import { Evidence } from './Evidence'
 import { useTreeModel, type TreeModel } from '../build/useTreeModel'
 import { Button, Select } from '../primitives'
 
@@ -144,6 +145,9 @@ function Planner({ tree, scenario, model, result }: { tree: Tree; scenario: Scen
 
       <DescribeChange tree={tree} />
       <OutcomeEstimate tree={tree} result={result} fmtOf={fmtOf} />
+      <Section n={3} title="Statistical evidence" aside="supports the decision">
+        <Evidence tree={tree} model={model} result={result} />
+      </Section>
       <InputControls tree={tree} scenario={scenario} model={model} result={result} fmtOf={fmtOf} />
       <ScenarioManager tree={tree} scenario={scenario} model={model} fmtOf={fmtOf} />
       {result.path.length > 0 && <Drivers tree={tree} result={result} fmtOf={fmtOf} />}
@@ -366,7 +370,7 @@ function InputControls({ tree, scenario, model, result, fmtOf }: { tree: Tree; s
   return (
     <>
       <Section
-        n={3}
+        n={4}
         title="Inputs you can change"
         aside={
           scenario.assumptions.length > 0 ? (
@@ -487,7 +491,7 @@ function Drivers({ tree, result, fmtOf }: { tree: Tree; result: ScenarioResult; 
   const outcomeFmt = tree.outcomeId ? fmtOf(tree.outcomeId) : undefined
   const max = Math.max(1e-12, ...result.contributions.map((c) => Math.abs(c.delta)))
   return (
-    <Section n={4} title="What drove the change" aside="each change alone, then the path">
+    <Section n={5} title="What drove the change" aside="each change alone, then the path">
       {result.contributions.length > 0 && (
         <div className="space-y-2">
           {result.contributions.map((c, i) => (

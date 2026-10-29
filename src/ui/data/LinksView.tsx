@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { findTable, linkStats, suggestLinks, type LinkStats } from '../../data/links'
 import type { ColumnRef, Link, Table } from '../../data/types'
 import { useStore } from '../../state/store'
+import { KeyCheck } from './KeyCheck'
 import { Badge, Button, SectionTitle, Select } from '../primitives'
 
 function refLabel(tables: Table[], ref: ColumnRef) {
@@ -41,10 +42,11 @@ export function LinksView() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">Table Links</h1>
+        <h1 className="font-display text-[26px] text-balance">Table Links</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Connect files through a shared ID column, like <span className="font-mono text-ink">region_code</span>. Tables already line up by date;
-          links let you filter a metric from one file by a column in another.
+          Connect files through their shared key, even when it has a different name in each file (<span className="font-mono text-ink">region_code</span>,{' '}
+          <span className="font-mono text-ink">Region</span>) or different values (<span className="font-mono text-ink">BKK</span> vs{' '}
+          <span className="font-mono text-ink">Bangkok</span>, matched through a lookup file). Then check below that every row lands on the right key.
         </p>
       </header>
 
@@ -85,6 +87,8 @@ export function LinksView() {
           </ul>
         )}
       </section>
+
+      {links.length > 0 && <KeyCheck tables={tables} links={links} />}
 
       <details className="group rounded-xl border border-line bg-surface" open={links.length === 0 && suggestions.length === 0}>
         <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium hover:bg-surface-2">

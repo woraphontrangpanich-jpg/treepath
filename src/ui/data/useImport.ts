@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { importFile, importSamples } from '../../data/import'
+import { suggestLinks } from '../../data/links'
 import { isAcceptedFile } from '../../data/parse'
 import { plural } from '../../lib/format'
 import { useStore } from '../../state/store'
@@ -38,6 +39,9 @@ export function useImport() {
     try {
       const tables = await importSamples()
       addTables(tables)
+      // The samples' keys match perfectly, so link them right away (lookup links only).
+      const { tables: all, links, addLink } = useStore.getState()
+      for (const s of suggestLinks(all, links)) if (s.stats.matchRate === 1) addLink({ from: s.from, to: s.to })
       notify('info', `Loaded ${plural(tables.length, 'sample table')}.`)
     } catch (err) {
       notify('error', err instanceof Error ? err.message : 'Could not load samples')

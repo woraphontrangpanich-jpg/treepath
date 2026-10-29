@@ -46,7 +46,8 @@ const campaigns = [
 
 const marketing = [['date', 'region_code', 'ad_spend', 'voucher_coverage', 'voucher_discount_pct']]
 const sales = [['Date', 'Region', 'Orders', 'Gross Price', 'Voucher Used Orders', 'Voucher Take-up', 'Revenue', 'Cost per Order']]
-const weather = [['date', 'region_code', 'rain_index']]
+// weather.csv names regions by city, not code: matched to the others through regions.csv.
+const weather = [['date', 'city', 'rain_index']]
 
 for (const r of regions) {
   let coverage = 0.12
@@ -82,7 +83,7 @@ for (const r of regions) {
 
     marketing.push([excelSerial(ms), r.code, round(ad, 0), round(coverage, 4), discount])
     sales.push([excelSerial(ms), r.code, orders, round(price), voucherOrders, round(takeUp, 4), round(revenue), round(cpo)])
-    weather.push([iso(ms), r.code, round(rain, 1)])
+    weather.push([iso(ms), r.name, round(rain, 1)])
     prevAd = ad
   }
 }

@@ -9,6 +9,7 @@ import {
   type NodeChange,
 } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { correlationsWith } from '../../model/correlate'
 import type { ScenarioResult } from '../../model/scenario'
 import { useStore } from '../../state/store'
 import { useTrees, uniqueLabel } from '../../state/trees'
@@ -67,6 +68,13 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
     return m
   }, [model.issues])
 
+  // Selecting a card in Build shows how every other card moves with it.
+  const selectedNode = !scenario && selection?.kind === 'node' ? selection.id : null
+  const corr = useMemo(
+    () => (selectedNode ? new Map(correlationsWith(tree, model.series, selectedNode).map((c) => [c.nodeId, c])) : null),
+    [selectedNode, tree, model.series],
+  )
+
   const built = useMemo<CardNode[]>(
     () =>
       tree.nodes.map((n) => ({
@@ -82,6 +90,8 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
           isOutcome: tree.outcomeId === n.id,
           issue: issueByNode.get(n.id),
           source: kindOf(n) === 'metric' && !scenario ? model.sourceLabel(n.id) : undefined,
+          model: model.models.get(n.id),
+          corr: corr?.get(n.id),
           scenario: scenario?.nodes.get(n.id),
           dimmed: !!onPath && !onPath.has(n.id),
           pulseDelay: order.has(n.id) ? order.get(n.id)! * STEP_MS : undefined,
@@ -89,7 +99,7 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
         },
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onPath derives from scenario
-    [tree.nodes, tree.outcomeId, selection, model, issueByNode, scenario],
+    [tree.nodes, tree.outcomeId, selection, model, issueByNode, scenario, corr],
   )
 
   // Local copy so React Flow keeps measured sizes and smooth drags; positions are committed on drag end.
@@ -177,7 +187,7 @@ export function Canvas({ tree, model, scenario }: { tree: Tree; model: TreeModel
       if (!raw) return
       e.preventDefault()
       const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
-      addFromPayload(tree, JSON.parse(raw) as DragPayload, { x: pos.x - 118, y: pos.y - 40 })
+      addFromPayload(tree, JSON.parse(raw) as DragPayload, { x: pos.x - 124, y: pos.y - 40 })
     },
     [tree, screenToFlowPosition, addFromPayload],
   )

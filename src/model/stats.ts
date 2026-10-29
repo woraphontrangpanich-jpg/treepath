@@ -102,6 +102,19 @@ export function tPValue(t: number, df: number): number {
   return ibeta(df / (df + t * t), df / 2, 0.5)
 }
 
+/** Upper-tail p-value of an F statistic with (d1, d2) degrees of freedom. */
+export function fPValue(f: number, d1: number, d2: number): number {
+  if (!Number.isFinite(f) || f <= 0) return 1
+  return ibeta(d2 / (d2 + d1 * f), d2 / 2, d1 / 2)
+}
+
+/** Two-sided p-value for a Pearson correlation over n pairs. */
+export function corrPValue(r: number, n: number): number {
+  if (!Number.isFinite(r) || n < 4) return 1
+  if (Math.abs(r) >= 1) return 0
+  return tPValue((r * Math.sqrt(n - 2)) / Math.sqrt(1 - r * r), n - 2)
+}
+
 export function mean(xs: number[]) {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN
 }

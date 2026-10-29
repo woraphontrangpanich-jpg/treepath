@@ -1,6 +1,6 @@
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { clsx } from 'clsx'
-import { ChevronDown, Copy, Download, FilePlus2, Info, LayoutDashboard, ListTree, Maximize, Sparkles, Trash2, Upload } from 'lucide-react'
+import { ChevronDown, Copy, Download, FilePlus2, Info, LayoutDashboard, PanelTopOpen, ListTree, Maximize, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Grain } from '../../data/types'
 import { useStore } from '../../state/store'
@@ -127,6 +127,8 @@ function TreeMenu({ tree }: { tree: Tree }) {
 function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
   const { renameTree, setGrain, applyPositions, toggleLegend } = useTrees.getState()
   const showLegend = useTrees((s) => s.showLegend)
+  const detailsAll = useTrees((s) => s.detailsAll)
+  const setDetailsAll = useTrees((s) => s.setDetailsAll)
   const { fitView, getNodes } = useReactFlow()
   const [busy, setBusy] = useState(false)
 
@@ -166,6 +168,16 @@ function Toolbar({ tree, errorCount }: { tree: Tree; errorCount: number }) {
       <Button size="sm" onClick={() => void autoLayout()} disabled={busy || tree.nodes.length === 0} title="Arrange cards: inputs below, outcome on top">
         <LayoutDashboard className="size-3.5" />
         <span className="hidden xl:inline">Tidy Up</span>
+      </Button>
+      <Button
+        size="sm"
+        variant={detailsAll ? 'secondary' : 'ghost'}
+        onClick={() => setDetailsAll(!detailsAll)}
+        aria-pressed={detailsAll}
+        title={detailsAll ? 'Hide details on every card' : 'Show details on every card'}
+      >
+        <PanelTopOpen className="size-3.5" />
+        <span className="hidden xl:inline">{detailsAll ? 'Hide Details' : 'Show Details'}</span>
       </Button>
       <Button size="sm" variant="ghost" onClick={() => fitView({ padding: 0.15, duration: 300 })} title="Fit to screen" aria-label="Fit to screen">
         <Maximize className="size-3.5" />

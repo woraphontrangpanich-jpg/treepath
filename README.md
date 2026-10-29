@@ -29,11 +29,17 @@ Open http://localhost:5173 and click **Try Sample Data**, then **Build → Net R
 
 - **Import:** multiple files and sheets, parsed in a Web Worker. Excel dates, dd/mm vs mm/dd, `1,234`, `฿99`,
   `12%` and `(40)` are all understood. Each column is used as *Date*, *Metric*, *Category / ID* or *Ignore*.
-- **Links between files:** suggested automatically (match rate shown). Lets you filter a metric by a column in
-  another file, e.g. sales for Bangkok only.
+- **Keys across files:** link files by their shared key even when it's named differently in each
+  (`region_code`, `Region`, `city`) or uses different values (`BKK` vs `Bangkok`, translated through a lookup file).
+  **Check Matched Keys** shows rows per key for every file and lists anything unmatched. In Build, **Match rows by**
+  lines files up by date *and* key, so learned effects compare like with like (e.g. region by region).
 - **Tree builder:**
   - Three kinds of link: **Formula** (exact, red when subtracted), **Model driver** (learned from history), and
     **Influence** (context only).
+  - Formula cards (ochre, `ƒ` band, shown with their expression) look clearly different from data cards.
+    Every card opens to show its details, or open them all at once with **Show Details**.
+  - Select a card to see how every other card moves with it: correlation of changes (r, with p-value) on
+    each card and ranked in the side panel.
   - Day / Week / Month views, with live values and sparklines on every card.
   - Checks for loops and typos, Tidy Up layout, undo, multiple trees, and export/import as `.treepath.json`
     (setup only, never your data).
@@ -41,6 +47,9 @@ Open http://localhost:5173 and click **Try Sample Data**, then **Build → Net R
   words, e.g. "+10% Ad Spend → +4.0% Orders 1 day later", with a reliability badge, R², direction accuracy
   on held-out data, and a lag finder.
 - **Forecast:**
+  - **Statistical evidence** for every learned effect used: coefficient, standard error, t, p-value with
+    significance stars, plus the model's F statistic, its p-value and R², and a plain verdict on whether the
+    drivers you changed are significant.
   - Formulas are exact; learned effects apply at steady state. An unchanged input always returns the baseline.
   - P5–P95 range from 400 draws of the model coefficients.
   - Per-input contributions that add up exactly to the total, saved scenarios, and a side-by-side comparison.

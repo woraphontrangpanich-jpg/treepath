@@ -1,4 +1,4 @@
-import { invert, tPValue, type Matrix } from './stats'
+import { fPValue, invert, tPValue, type Matrix } from './stats'
 
 export interface OlsResult {
   /** [intercept, b1, …, bk] */
@@ -10,6 +10,9 @@ export interface OlsResult {
   cov: Matrix
   r2: number
   adjR2: number
+  /** Overall F test: do the drivers together explain anything? */
+  fStat: number
+  fP: number
   n: number
   k: number
   residSd: number
@@ -58,6 +61,8 @@ export function ols(x: number[][], y: number[]): OlsResult | null {
     cov,
     r2,
     adjR2: 1 - ((1 - r2) * (n - 1)) / df,
+    fStat: k > 0 && r2 < 1 ? r2 / k / ((1 - r2) / df) : Infinity,
+    fP: k > 0 && r2 < 1 ? fPValue(r2 / k / ((1 - r2) / df), k, df) : 0,
     n,
     k,
     residSd: Math.sqrt(sigma2),

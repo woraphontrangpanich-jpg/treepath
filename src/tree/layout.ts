@@ -8,13 +8,12 @@ function getElk() {
   return elkPromise
 }
 
-export const DEFAULT_SIZE = { width: 236, height: 120 }
+export const DEFAULT_SIZE = { width: 248, height: 120 }
 
 /** Rough card size before React Flow has measured it (formula cards show their expression). */
 export function estimateSize(n: TreeNode) {
-  if (n.formula !== undefined) return { width: 236, height: 160 }
-  if (n.metric) return { width: 236, height: 128 }
-  return { width: 236, height: 110 }
+  if (n.formula !== undefined) return { width: 248, height: 120 }
+  return { width: 248, height: 122 }
 }
 
 /** Return a copy of the tree's nodes with ELK positions, using estimated sizes. */

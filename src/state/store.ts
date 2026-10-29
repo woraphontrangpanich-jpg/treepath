@@ -81,7 +81,12 @@ export const useStore = create<State>((setState, getState) => ({
         else tables.push(t)
       }
       const firstNew = incoming[0] && tables.find((t) => t.fileName === incoming[0].fileName && t.sheetName === incoming[0].sheetName)
-      return { tables, selectedTableId: firstNew?.id ?? s.selectedTableId, dataView: 'table' }
+      // Drop links whose column vanished in the re-imported file (e.g. a renamed header).
+      const has = (r: Link['from']) => tables.some((t) => t.id === r.tableId && t.columns.some((c) => c.name === r.column))
+      const links = s.links.filter((l) => has(l.from) && has(l.to))
+      if (links.length < s.links.length)
+        setTimeout(() => getState().notify('info', `Removed ${s.links.length - links.length} link(s) to columns that no longer exist. Check Table Links.`), 0)
+      return { tables, links, selectedTableId: firstNew?.id ?? s.selectedTableId, dataView: 'table' }
     }),
 
   removeTable: (id) =>
